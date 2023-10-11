@@ -75,7 +75,7 @@ function main()
             # Calculate and store energy
             Energy = GetEnergy(LatticeConfiguration)
             Magnetization = GetMagnetization(LatticeConfiguration)
-            write(DataFile,"$Energy, $Magnetization")
+            write(DataFile,"$Energy, $Magnetization\n")
         end
         Acceptance /= (MonteCarloSamples * LatticeSize^2)
         @info "Acceptance = $Acceptance"        
