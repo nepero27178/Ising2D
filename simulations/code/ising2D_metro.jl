@@ -22,7 +22,7 @@ else
     LatticeSize = parse(Int64,UserInput[2])                 # Size
     ThermSamples = parse(Int64,UserInput[3])                # Thermalization
     MonteCarloSamples = parse(Int64,UserInput[4])           # Monte Carlo
-    FilePath = UserInput[5]                               # Data file
+    FilePath = UserInput[5]		    		    # Data file
 end
 
 # Simulation
@@ -60,7 +60,7 @@ function main()
         @info "Thermal acceptance = $ThermAcceptance"
         
         # Real run: simulate 2D-Ising
-        for Step in (ThermSamples+1):MonteCarloSamples
+        for Step in 1:MonteCarloSamples
 
             # Calculate energy after N^2 updates not to have steps too short
             # in energy space
@@ -77,11 +77,11 @@ function main()
             Magnetization = GetMagnetization(LatticeConfiguration)
             write(DataFile,"$Energy, $Magnetization\n")
         end
+        
+        close(DataFile)
         Acceptance /= (MonteCarloSamples * LatticeSize^2)
         @info "Acceptance = $Acceptance"        
-
-    end # end for @time, printing the timestamp  
-    
-end # end main
+    end 			# End for @time, printing the timestamp  
+end 				# End main
 
 main()
