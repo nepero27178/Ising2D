@@ -1,14 +1,18 @@
-In this repo you will find all the files I've written in order to simulate
+In this repo you will find all the files needed to simulate
 the 2D Ising model on a square lattice. The work was related to the university
 course "Numerical Methods for Physics", held in 2023 by Professor Claudio
 Bonati in the University of Pisa.
 
+This work was done by me and some friends of mine:
+- Valerio Caporioni
+- Alessandro Gori (me)
+- Marco Pompili
+- Jacopo Resasco
+You will probably find similar works on their repos.
+
 The vast majority of the code is written in C and Julia, but I've also used
 Python and Bash to analyze the data. You will also find a LaTeX document I
 wrote as a relation on my numerical experiment.
-
-This work was done together with my friends Jacopo Resasco, Marco Pompili and
-Valerio Caporioni. You will find similar works on their repos.
 
 # Outline of the project
 This project consists of three main parts: **simulation**, **analysis** and
