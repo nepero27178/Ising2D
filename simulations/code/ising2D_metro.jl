@@ -65,8 +65,13 @@ function main()
             # Calculate energy after N^2 updates not to have steps too short
             # in energy space
             for _ in 1:(LatticeSize^2)
-                Output = NextMetropolisStep(LatticeConfiguration,Beta,
-                                            StepAcceptability)
+                # Output = NextMetropolisStep(LatticeConfiguration,Beta,
+                #                             StepAcceptability)
+		
+		# To run cluster updates uncomment line 73 and comment lines
+		# 68 and 69 
+		Output = NextMetropolisClusterStep(LatticeConfiguration,Beta)
+		
                 if Output[1]
                     LatticeConfiguration = Output[2]
                     Acceptance+=1
