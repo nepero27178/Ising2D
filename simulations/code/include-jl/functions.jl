@@ -3,7 +3,10 @@
 # -----------------
 
 # Set initial lattice
-function SetLattice(LatticeSize::Int64) # useless?
+function SetLattice(LatticeSize::Int64)
+    """
+    Initializes a lattice of given size.
+    """
     LatticeConfiguration = ones(LatticeSize,LatticeSize)
     return LatticeConfiguration
 end
@@ -31,8 +34,12 @@ end
 
 # Choose random site on lattice
 
-function GetRandomSite(LatticeSize::Int64) # useless?
-    RandomSite = rand((1:LatticeSize),(1,2))
+function GetRandomSite(LatticeSize::Int64) # useless? No
+    """
+    Creates a Vector that indicates a random site of the lattice.
+    Note that without [ ...] it would create a 1 X 2 Matrix.
+    """
+    RandomSite = [rand((1:LatticeSize),(1,2))...]
     return RandomSite
 end
 
@@ -171,6 +178,65 @@ function GrowCluster(LatticeConfiguration::Matrix{Float64},
 	end
     end
 end
+
+# Functions used for the cluster update code ising2D_cluster.jl
+# It seems to work but I'm not sure. I dont' understand why it is
+# not possible to directly use "Cluster" instead of "Visited"
+# (here I assume the code I read by that guy was not redundant)
+
+function GetNeighbours(Site::Vector{Int64}, N::Int64)
+    """
+    N = lattice size
+
+    Returns a Vector of four Vectors, containing the coordinates of
+    the neighbours of the given site.
+    """
+    x, y = [Site...]
+    Neighbours = [[mod(x,N)+1, y], [mod(x-2+N,N)+1, y], [x, mod(y-2+N,N)+1], [x, mod(y-2+N,N)+1]]
+    return Neighbours
+end
+
+function CreateCluster(LatticeConfiguration::Matrix{Float64},
+                        Beta::Float64,
+                        Site::Vector{Int64},
+                        Cluster::Vector{Any},
+                        Visited::Vector{Any})
+    """
+    Creates a cluster of parallel-oriented spins,
+    according to the Wolff algorithm
+    """
+    SiteSpin = LatticeConfiguration[Site...]
+    N = size(LatticeConfiguration, 1)
+    Neighbours = GetNeighbours(Site, N)
+    push!(Cluster, Site)
+    push!(Visited, Site)
+    AcceptanceProbability = 1 - exp(-2*Beta)
+    # this is the Acceptance Probability that allows to always accept the flip
+    for NeighSite ∈ Neighbours
+        if LatticeConfiguration[NeighSite...] == SiteSpin
+            if NeighSite ∉ Visited && rand() < AcceptanceProbability 
+                Cluster = CreateCluster(LatticeConfiguration, Beta, NeighSite, Cluster, Visited)
+            end
+        end
+    end
+    return  Cluster
+end
+
+function FlipCluster(LatticeConfiguration::Matrix{Float64}, Cluster::Vector{Any})
+    for ClusterSite ∈ Cluster
+        LatticeConfiguration[ClusterSite...] *= -1
+    end
+    return LatticeConfiguration
+end
+
+function NextClusterStep(LatticeConfiguration::Matrix{Float64}, Beta::Float64)
+    N = size(LatticeConfiguration, 1)
+    StartingSite = GetRandomSite(N)
+    Cluster = CreateCluster(LatticeConfiguration, Beta, StartingSite, [], [])
+    LatticeConfiguration =  FlipCluster(LatticeConfiguration, Cluster)
+    return LatticeConfiguration
+end
+
 
 
 # -------------------
