@@ -8,6 +8,7 @@ This work was done by me and some friends of mine:
 - Alessandro Gori (me)
 - Marco Pompili
 - Jacopo Resasco
+
 You will probably find similar works on their repos.
 
 The vast majority of the code is written in C and Julia, but we've also used
