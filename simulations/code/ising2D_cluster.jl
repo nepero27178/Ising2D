@@ -25,37 +25,35 @@ end
 
 # Simulation
 
-LatticeConfiguration = SetLattice(LatticeSize)
-InitialSite = GetRandomSite(LatticeSize)
-# Make sure the site index is a Vector
-Cluster = CreateCluster(LatticeConfiguration, Beta, InitialSite, [], [])
-FlipCluster(LatticeConfiguration, Cluster)
-display(LatticeConfiguration)
-
-
 function main()
     DataFile = open(FilePath,"w")
     @time begin
         # Set up lattice
         LatticeConfiguration = SetLattice(LatticeSize)
+        ExpansionProbability = 1 - exp(-2*Beta)
         
         Energy = GetEnergy(LatticeConfiguration)
         @info "Initial energy = $Energy"
         Magnetization = GetMagnetization(LatticeConfiguration)
         @info "Initial magnetization = $Magnetization"
         
-        # Naked run: stash thermalization without any measurement, just update
+        # Naked run: stash thermalization without any measurement, just update,
+        # don't measure thermal acceptance
         for ThermStep in 1:ThermSamples
             LatticeConfiguration = NextClusterStep(LatticeConfiguration,Beta)
         end
+        
         # Actual run: simulate 2D-Ising
         for Step in 1:MonteCarloSamples
 
             # Calculate energy after N^2 updates not to have steps too short
             # in energy space
+            
             for _ in 1:(LatticeSize^2)
-                LatticeConfiguration = NextClusterStep(LatticeConfiguration,Beta)
+                LatticeConfiguration = NextClusterStep(LatticeConfiguration,
+                				       ExpansionProbability)
             end
+            
             # Calculate and collect energy
             Energy = GetEnergy(LatticeConfiguration)
             Magnetization = GetMagnetization(LatticeConfiguration)

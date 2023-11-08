@@ -111,10 +111,10 @@ function NextMetropolisStep(LatticeConfiguration::Matrix{Float64},
     return Accepted, LatticeConfiguration
 end
 
-function NextClusterStep(LatticeConfiguration::Matrix{Float64}, Beta::Float64)
+function NextClusterStep(LatticeConfiguration::Matrix{Float64}, 
+			 ExpansionProbability::Float64)
     
     N = size(LatticeConfiguration, 1)
-    ExpansionProbability = 1 - exp(-2*Beta)
     StartingSite = GetRandomSite(N)
     
     Cluster = GrowCluster(LatticeConfiguration, ExpansionProbability, 
