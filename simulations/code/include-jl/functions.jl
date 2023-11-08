@@ -45,8 +45,8 @@ end
 
 # Select neighbours index on lattice
 
-function GetNeighboursPositions(LatticeConfiguration::Matrix{Float64},
-		       	        Site::Array{Int64})   
+function GetNeighbours(LatticeConfiguration::Matrix{Float64},
+		       Site::Array{Int64})   
     N = size(LatticeConfiguration,1)
     
     # Arbitrary clockwise orderding, starting from x+1 (right)
@@ -111,37 +111,22 @@ function NextMetropolisStep(LatticeConfiguration::Matrix{Float64},
     return Accepted, LatticeConfiguration
 end
 
-# Cluster update
-
-function NextMetropolisClusterStep(LatticeConfiguration::Matrix{Float64}, 
-                                   Beta::Float64)
-    # Setup
-    N = size(LatticeConfiguration,1)
-    SingleJoinAcceptability = 1-exp(-2*Beta)
-    AlreadyRejected = iszero.(LatticeConfiguration)
-    """
-    We initalize a boolean matrix the same size as the lattice. It starts with
-    all zeros and everytime we add to the cluster we update the relative value
-    in the boolean matrix to 1. It is needed to avoid the case the same site
-    cluster-joining step was rejceted from one of its neighbour and accepted
-    from another one. In this case the cluster expands exponentially in size
-    and evetually all the lattice gets infected. 
-    """
-
-    # Extraction of a random site of the lattice with recursive call
-    Site = GetRandomSite(N)
-    GrowCluster(LatticeConfiguration,SingleJoinAcceptability,
-    		Site,AlreadyRejected)
-    		
-    return SingleJoinAcceptability
+function NextClusterStep(LatticeConfiguration::Matrix{Float64}, Beta::Float64)
+    
+    N = size(LatticeConfiguration, 1)
+    ExpansionProbability = 1 - exp(-2*Beta)
+    StartingSite = GetRandomSite(N)
+    
+    Cluster = GrowCluster(LatticeConfiguration, ExpansionProbability, 
+    			  StartingSite, [])
+    return LatticeConfiguration
 end
 
-# Add to cluster (recursive call)
 function GrowCluster(LatticeConfiguration::Matrix{Float64},
-		     SingleJoinAcceptability::Float64,
-		     Site::Array{Int64},
-		     AlreadyRejected::BitArray)
-    
+                     ExpansionProbability::Float64,
+                     Site::Vector{Int64},
+                     Cluster::Vector{Any})
+   
     """
     Key idea: we start at some site with spin +1 (for example).
     1) Save site spin as comparing variable for next steps;
@@ -155,89 +140,22 @@ function GrowCluster(LatticeConfiguration::Matrix{Float64},
     already went.
     """
     
-    LocalX,LocalY = Site
-    LocalState = LatticeConfiguration[ LocalX,LocalY ]
-    LatticeConfiguration[ LocalX,LocalY ] *= -1
-    NeighboursPositions = GetNeighboursPositions(LatticeConfiguration,Site)
-    
-    for i in 1:4
-	NewSite = NeighboursPositions[i]
-	NewX, NewY = NewSite
-	if (LatticeConfiguration[ NewX, NewY ] == LocalState && 
-	    rand() < SingleJoinAcceptability && !AlreadyRejected[ NewX, NewY ])
-	    # Same spin, accepted step and not already rejected site
-	    GrowCluster(LatticeConfiguration,SingleJoinAcceptability,
-		        NewSite,AlreadyRejected);
-	    println("let me iiiin")  	  # debug
-
-	else
-	    # One of the above is false
-	    println("ight imma head out") # debug
-	    AlreadyRejected[ NewX, NewY ] = true
-
-	end
-    end
-end
-
-# Functions used for the cluster update code ising2D_cluster.jl
-# It seems to work but I'm not sure. I dont' understand why it is
-# not possible to directly use "Cluster" instead of "Visited"
-# (here I assume the code I read by that guy was not redundant)
-
-function GetNeighbours(Site::Vector{Int64}, N::Int64)
-    """
-    N = lattice size
-
-    Returns a Vector of four Vectors, containing the coordinates of
-    the neighbours of the given site.
-    """
-    x, y = [Site...]
-    Neighbours = [[mod(x,N)+1, y], [mod(x-2+N,N)+1, y], [x, mod(y-2+N,N)+1], [x, mod(y-2+N,N)+1]]
-    return Neighbours
-end
-
-function CreateCluster(LatticeConfiguration::Matrix{Float64},
-                        Beta::Float64,
-                        Site::Vector{Int64},
-                        Cluster::Vector{Any},
-                        Visited::Vector{Any})
-    """
-    Creates a cluster of parallel-oriented spins,
-    according to the Wolff algorithm
-    """
-    SiteSpin = LatticeConfiguration[Site...]
     N = size(LatticeConfiguration, 1)
+    SiteSpin = LatticeConfiguration[Site...]
     Neighbours = GetNeighbours(Site, N)
-    push!(Cluster, Site)
-    push!(Visited, Site)
-    AcceptanceProbability = 1 - exp(-2*Beta)
-    # this is the Acceptance Probability that allows to always accept the flip
+    
+    LatticeConfiguration[Site...] *= -1
+    push!(Cluster, Site) 
+    
     for NeighSite ∈ Neighbours
-        if LatticeConfiguration[NeighSite...] == SiteSpin
-            if NeighSite ∉ Visited && rand() < AcceptanceProbability 
-                Cluster = CreateCluster(LatticeConfiguration, Beta, NeighSite, Cluster, Visited)
-            end
+        if ( LatticeConfiguration[NeighSite...] == SiteSpin 
+             && rand() < AcceptanceProbability )
+             Cluster = GrowCluster(LatticeConfiguration, 
+        		           ExpansionProbability, NeighSite, Cluster)
         end
     end
     return  Cluster
 end
-
-function FlipCluster(LatticeConfiguration::Matrix{Float64}, Cluster::Vector{Any})
-    for ClusterSite ∈ Cluster
-        LatticeConfiguration[ClusterSite...] *= -1
-    end
-    return LatticeConfiguration
-end
-
-function NextClusterStep(LatticeConfiguration::Matrix{Float64}, Beta::Float64)
-    N = size(LatticeConfiguration, 1)
-    StartingSite = GetRandomSite(N)
-    Cluster = CreateCluster(LatticeConfiguration, Beta, StartingSite, [], [])
-    LatticeConfiguration =  FlipCluster(LatticeConfiguration, Cluster)
-    return LatticeConfiguration
-end
-
-
 
 # -------------------
 # --- (3) Physics ---
@@ -246,11 +164,13 @@ end
 # Extract energy from lattice configuration
 
 function GetEnergy(LatticeConfiguration::Matrix{Float64})
+
     """
     In order to calculate the energy of the Ising lattice, we iterate over the
     sites and compute the sum. Note that S is the sum only over forward ones:
     this way we avoid repetition.
     """
+
     N = size(LatticeConfiguration,1)
     LatticeEnergy = 0.0
     for i in 1:N
