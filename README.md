@@ -7,7 +7,7 @@ This work was done by me and some friends of mine:
 - Valerio Caporioni
 - Alessandro Gori (me)
 - Marco Pompili
-- Jacopo Resasco
+- (Jacopo Resasco)
 
 You will probably find similar works on their repos.
 
