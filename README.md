@@ -11,7 +11,7 @@ This work was done by me and some friends of mine:
 
 You will probably find similar works on their repos.
 
-The vast majority of the code is written in C and Julia, but we've also used
+The vast majority of the code is written in Julia, but we've also used
 Python and Bash to analyze the data. You will also find a LaTeX document I
 wrote as a relation on my numerical experiment.
 
