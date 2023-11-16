@@ -84,7 +84,7 @@ function NextMetropolisStep(LatticeConfiguration::Matrix{Float64},
     SiteSpin = LatticeConfiguration[ Site[1], Site[2] ]
 
     TotalNeighboursSpin = 0
-    NeighboursPositions = GetNeighboursPositions(LatticeConfiguration,Site)
+    NeighboursPositions = GetNeighbours(LatticeConfiguration,Site)
     
     for i in 1:4
     	# Sum to total spin the i-th entry of the neighbouring spin to site x,y

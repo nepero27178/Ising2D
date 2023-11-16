@@ -29,6 +29,8 @@ end
 
 function main()
     DataFile = open(FilePath,"w")
+    write(DataFile,"# Energy, Energy2, Energy4,
+   		      Magnetization, Magnetization2, Magnetization4\n")
     @time begin
         # Set up lattice
         LatticeConfiguration = SetLattice(LatticeSize)
@@ -73,10 +75,18 @@ function main()
                     Acceptance+=1
                 end
             end
-            # Calculate and store energy
+            # Calculate and store:
+            # Energy and magnetization
             Energy = GetEnergy(LatticeConfiguration)
             Magnetization = GetMagnetization(LatticeConfiguration)
-            write(DataFile,"$Energy, $Magnetization\n")
+            
+            # Energy^2, Energy^4, Magnetization^2, Magnetization^4
+            Energy2 = Energy^2
+            Energy4 = Energy^4
+            Magnetization2 = Magnetization^2
+            Magnetization4 = Magnetization^4
+            write(DataFile,"$Energy, $Energy2, $Energy4,
+            		    $Magnetization, $Magnetization2, $Magnetization4\n")
         end
         
         close(DataFile)
