@@ -61,13 +61,10 @@ function main()
             Energy = GetEnergy(LatticeConfiguration)
             Magnetization = GetMagnetization(LatticeConfiguration)
             
-            # Energy^2, Energy^4, Magnetization^2, Magnetization^4
-            Energy2 = Energy^2
-            Energy4 = Energy^4
-            Magnetization2 = Magnetization^2
-            Magnetization4 = Magnetization^4
-            write(DataFile,"$Energy, $Energy2, $Energy4,
-            		    $Magnetization, $Magnetization2, $Magnetization4\n")
+            # Magnetization^2, Magnetization^4
+            Mag2 = Magnetization^2
+            Mag4 = Magnetization^4
+            write(DataFile,"$Energy, $Magnetization, $Mag2, $Mag4\n")
         end
         
         close(DataFile)  

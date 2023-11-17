@@ -47,14 +47,14 @@ end
 
 function GetNeighbours(LatticeConfiguration::Matrix{Float64},
 		       Site::Array{Int64})   
-    N = size(LatticeConfiguration,1)
+    L = size(LatticeConfiguration,1)
     
     # Arbitrary clockwise orderding, starting from x+1 (right)
     x,y = Site
-    Neighbours = [ [x,mod(y,N)+1],	# 1: one column after  (x+1)
-    		   [mod(x-2+N,N)+1,y],	# 2: one row above     (y+1)
-    		   [x,mod(y-2+N,N)+1],  # 3: one column before (x-1)
-    		   [mod(x,N)+1,y] ]	# 4: one row below     (y-1)
+    Neighbours = [ [x,mod(y,L)+1],	# 1: one column after  (x+1)
+    		   [mod(x-2+L,L)+1,y],	# 2: one row above     (y+1)
+    		   [x,mod(y-2+L,L)+1],  # 3: one column before (x-1)
+    		   [mod(x,L)+1,y] ]	# 4: one row below     (y-1)
     """
     List of all positions of neighbouring sites to given position. Note that in
     modular algebra you have e.g. mod(3,3)=0, and since the indexing of Julia
@@ -74,11 +74,11 @@ function NextMetropolisStep(LatticeConfiguration::Matrix{Float64},
     """
     Implementation of the Metropolis-Rosenbluth-Teller algorithm.
     """
-    N = size(LatticeConfiguration,1)
+    L = size(LatticeConfiguration,1)
     Accepted = false
 
     # Extraction of a random site of the lattice
-    Site = GetRandomSite(N)
+    Site = GetRandomSite(L)
 
     # Reading of the current spin state of the site
     SiteSpin = LatticeConfiguration[ Site[1], Site[2] ]
@@ -101,8 +101,8 @@ function NextMetropolisStep(LatticeConfiguration::Matrix{Float64},
 
         # Remember to divide by volume in order to have energy and 
         # magnetization per unit volume
-        DeltaEnergy /= (N^2)
-        DeltaMagnetization /= (N^2)
+        DeltaEnergy /= (L^2)
+        DeltaMagnetization /= (L^2)
     else 
         DeltaEnergy = 0
         DeltaMagnetization = 0
@@ -114,8 +114,8 @@ end
 function NextClusterStep(LatticeConfiguration::Matrix{Float64}, 
 			 ExpansionProbability::Float64)
     
-    N = size(LatticeConfiguration, 1)
-    StartingSite = GetRandomSite(N)
+    L = size(LatticeConfiguration, 1)
+    StartingSite = GetRandomSite(L)
     
     Cluster = GrowCluster(LatticeConfiguration, ExpansionProbability, 
     			  StartingSite, [])
@@ -140,9 +140,9 @@ function GrowCluster(LatticeConfiguration::Matrix{Float64},
     already went.
     """
     
-    N = size(LatticeConfiguration, 1)
+    L = size(LatticeConfiguration, 1)
     SiteSpin = LatticeConfiguration[Site...]
-    Neighbours = GetNeighbours(Site, N)
+    Neighbours = GetNeighbours(Site,L)
     
     LatticeConfiguration[Site...] *= -1
     push!(Cluster, Site) 
@@ -171,18 +171,18 @@ function GetEnergy(LatticeConfiguration::Matrix{Float64})
     this way we avoid repetition.
     """
 
-    N = size(LatticeConfiguration,1)
+    L = size(LatticeConfiguration,1)
     LatticeEnergy = 0.0
-    for i in 1:N
-        for j in 1:N
+    for i in 1:L
+        for j in 1:L
             S0 = LatticeConfiguration[i,j]
-            S = ( LatticeConfiguration[mod(i,N)+1,j] +
-                  LatticeConfiguration[i,mod(j,N)+1] )
+            S = ( LatticeConfiguration[mod(i,L)+1,j] +
+                  LatticeConfiguration[i,mod(j,L)+1] )
             NeighboursProduct = -S*S0
             LatticeEnergy += NeighboursProduct
         end
     end
-    LatticeEnergy /= (N^2)
+    LatticeEnergy /= (L^2)
     return LatticeEnergy
 end
 
@@ -192,6 +192,6 @@ function GetMagnetization(LatticeConfiguration::Matrix{Float64})
     """
     The magnetization is the sum of the matrix elements per unit volume.
     """
-    N = size(LatticeConfiguration,1)
-    return sum(LatticeConfiguration)/(N^2)
+    L = size(LatticeConfiguration,1)
+    return sum(LatticeConfiguration)/(L^2)
 end

@@ -2,11 +2,11 @@ from matplotlib import pyplot as plt
 import numpy as np
 import os
 
-N=10
+L=10
 PlotData=np.array([])
 # complete...
 
-Directory = "./N={N}"
+Directory = "./L={L}"
 FileExtension = '.txt'
 
 Files = os.listdir(Directory)
