@@ -29,8 +29,7 @@ end
 
 function main()
     DataFile = open(FilePath,"w")
-    write(DataFile,"# Energy, Energy2, Energy4,
-   		      Magnetization, Magnetization2, Magnetization4\n")
+    write(DataFile,"# Energy, Magnetization, Magnetization2, Magnetization4\n")
     @time begin
         # Set up lattice
         LatticeConfiguration = SetLattice(LatticeSize)
