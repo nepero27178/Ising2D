@@ -26,7 +26,7 @@ end
 function main()
 
     Data = readdlm(FilePath, ',', Float64, comments=true)
-    BlockedData = Blocking(Data, 200)
+    BlockedData = BlockData(Data, 200)
 
     open(FilePathOut, "a") do io
         write(io, "# Energy, Magnetization, Magnetization2, Magnetization4\n")
