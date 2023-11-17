@@ -10,11 +10,32 @@ function ReadData(Filename)
     return Result 
 end
 
+# ---------------
+# --- Physics ---
+# ---------------
+
+# Binder's cumulant
+
+function GetBinderCumulant(Mag2::Array{Float64}, Mag4::Array{Float64})
+	# Computes Binder's cumulant <m^4>/<m^2>^2 starting from data
+	MeanMag2 = mean(Mag2)
+	MeanMag4 = mean(Mag4)
+	return MeanMag4 / ( (MeanMag2) * (MeanMag2) )
+end
+
+# (Artificial) magnetization variance
+
+function GetMagnetizationVariance(Mag::Array{Float64}, Mag2::Array{Float64})
+	# Computes magnetization "variance" (<m^2>-<|m|>^2) starting from data
+	MeanAbsMag = mean(abs.(Mag))
+	MeanMag2 = mean(Mag2)
+	return MeanMag2 - ( MeanAbsMag * MeanAbsMag )
+
 # ----------------
 # --- Blocking ---
 # ----------------
 
-function Blocking(Data::Matrix{Float64}, BlockLenght::Int64)
+function BlockData(Data::Matrix{Float64}, BlockLenght::Int64)
     "
     Reshapes the data by dividing them in blocks, then computes the mean value
     of each block and creates a new Matrix to store these mean values in.
@@ -25,19 +46,19 @@ function Blocking(Data::Matrix{Float64}, BlockLenght::Int64)
         - Matrix
     "
     BlockNumber = Int(floor(size(Data, 1)/BlockLenght))
-    Result = zeros(BlockNumber, size(Data, 2))
+    BlockedData = zeros(BlockNumber, size(Data, 2))
     for BlockIndex in 1:BlockNumber
         BlockStart = (BlockIndex-1)*BlockLenght +1
         BlockEnd = BlockIndex*BlockLenght
         BlockMean = mean(Data[BlockStart:BlockEnd,:],dims = 1)
-        Result[BlockIndex, :] = BlockMean
+        BlockedData[BlockIndex, :] = BlockMean
     end
-    return Result
+    return BlockedData
 end
 
-# -----------------
-# --- Bootstrap ---
-# -----------------
+# ------------------
+# --- Resampling ---
+# ------------------
   
 function ResampleData(Data::Matrix{Float64})
 		      
@@ -48,7 +69,7 @@ function ResampleData(Data::Matrix{Float64})
     	- Rows number (size 1) = number of data point per observable
     	- Columns number (size 2) = number of observables
     Output
-    - Array of resampled blocks, with repetition
+    - Array of resampled data, with repetition
     """
     ResampledData = zeros(size(Data)) # New matrix, same size as Data
     RowsNumber = size(Data,1)    

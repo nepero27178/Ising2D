@@ -2,7 +2,7 @@
 
 using Logging
 using LinearAlgebra
-include("./include-jl/functions.jl")
+include("./functions.jl")
 
 # Setup
 
