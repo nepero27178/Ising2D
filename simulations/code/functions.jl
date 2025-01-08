@@ -1,13 +1,12 @@
-# -----------------
-# --- (1) Setup --- 
-# -----------------
+# ----------------- #
+# --- (1) Setup --- #
+# ----------------- #
 
 # Set initial lattice
-function SetLattice(LatticeSize::Int64)
-    """
-    Initializes a lattice of given size.
-    """
-    LatticeConfiguration = ones(LatticeSize,LatticeSize)
+
+function SetLattice(L::Int64)
+    """Create a lattice represented as a matrix of size (L,L), initialized to +1."""
+    LatticeConfiguration = ones(L,L)
     return LatticeConfiguration
 end
 
@@ -28,9 +27,9 @@ function GetStepAcceptability(Beta::Float64)
     return StepAcceptability
 end
 
-# ---------------------------------
-# --- (2) Steps in Markov Chain ---
-# ---------------------------------
+# --------------------------------- #
+# --- (2) Steps in Markov Chain --- #
+# --------------------------------- #
 
 # Choose random site on lattice
 
@@ -45,11 +44,14 @@ end
 
 # Select neighbours index on lattice
 
-function GetNeighbours(LatticeConfiguration::Matrix{Float64},
-		       Site::Array{Int64})   
+function GetNeighboursSquare(LatticeConfiguration::Matrix{Float64},
+		       Site::Array{Int64})
+    """
+    Get the indexes of the neighbouring sites to a given site,
+    for the square lattice, in clockwise order, starting from Right.
+    """
     L = size(LatticeConfiguration,1)
     
-    # Arbitrary clockwise orderding, starting from x+1 (right)
     x,y = Site
     Neighbours = [ [x,mod(y,L)+1],	# 1: one column after  (x+1)
     		   [mod(x-2+L,L)+1,y],	# 2: one row above     (y+1)
@@ -64,6 +66,27 @@ function GetNeighbours(LatticeConfiguration::Matrix{Float64},
     numbers.
     """    
     return Neighbours
+end
+
+function GetNeighboursTriangle(L::Int, site::Tuple{Int, Int})
+    """
+    Get the indexes of the neighbouring sites to a given site,
+    for the triangular lattice, in clockwise order, starting from Up.
+    """
+    i, j = site
+
+    # Define neighbors. Remember that moving to the right, (x,y) → (x+1, y), means selecting 
+    # the next column, (i,j) → (i,j+1). Therefore x is associated to columns.
+    # Moving up, (x,y) → (x, y+1), means going to the previous row (i,j) → (i-1,j).
+    neighbors = [
+        [mod(i-2, L) + 1, j],                    # Up (x, y+1)
+        [mod(i-2, L) + 1, mod(j, L) + 1],        # Upper Right
+        [i, mod(j, L) + 1],                      # Right (x+1, y)
+        [mod(i, L) + 1, j],                      # Down (x, y-1)
+        [mod(i, L)+ 1, mod(j-2, L) + 1],         # Lower Left
+        [i, mod(j-2, L) + 1]                     # Left (x-1, y)
+    ]
+    return neighbors
 end
 
 # Single Metropolis update
@@ -111,6 +134,8 @@ function NextMetropolisStep(LatticeConfiguration::Matrix{Float64},
     return Accepted, LatticeConfiguration
 end
 
+# Cluster Metropolis update (Wolff's algorithm)
+
 function NextClusterStep(LatticeConfiguration::Matrix{Float64}, 
 			 ExpansionProbability::Float64)
     
@@ -157,9 +182,9 @@ function GrowCluster(LatticeConfiguration::Matrix{Float64},
     return  Cluster
 end
 
-# -------------------
-# --- (3) Physics ---
-# -------------------
+# ------------------- #
+# --- (3) Physics --- #
+# ------------------- #
 
 # Extract energy from lattice configuration
 
