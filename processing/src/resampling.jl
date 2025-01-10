@@ -34,10 +34,10 @@ end
 
 # Functions to extract secondary observables and their errors
 
-function GetSecondaryObservables(BlockedData::Matrix{Float64})
-	AvgAbsMag = mean(broadcast(abs,BlockedData[:,2]))
-	AvgMag2 = mean(BlockedData[:,3])
-	AvgMag4 = mean(BlockedData[:,4])
+function GetSecondaryObservables(Data::Matrix{Float64})
+	AvgAbsMag = mean(broadcast(abs,Data[:,2]))
+	AvgMag2 = mean(Data[:,3])
+	AvgMag4 = mean(Data[:,4])
 	
 	# Compute Binder's cumulant and magnetic susceptibility
 	BinderCumulant = AvgMag4 / (AvgMag2 * AvgMag2)
@@ -45,23 +45,23 @@ function GetSecondaryObservables(BlockedData::Matrix{Float64})
 	return BinderCumulant, MagnetizationVariance
 end
 
-function ResampleData(BlockedData::Matrix{Float64})
-    FakeData = zeros(size(BlockedData))
-    for i in 1:size(BlockedData,1)
-        RandomIndex = rand(1:size(BlockedData,1))
-        FakeData[i,:] = BlockedData[RandomIndex,:]
+function ResampleData(Data::Matrix{Float64})
+    FakeData = zeros(size(Data))
+    for i in 1:size(Data,1)
+        RandomIndex = rand(1:size(Data,1))
+        FakeData[i,:] = Data[RandomIndex,:]
     end
     return FakeData
 end
 
-function GetBootstrapErrors(BlockedData::Matrix{Float64}, R::Int64)
+function GetBootstrapErrors(Data::Matrix{Float64}, R::Int64)
 	# Get errors using bootstrap algorithm
 	# R = Resampling steps
 	FakeObservables = zeros(R,2)    # R rows, two columns
 	
 	for i in 1:R
 		# Resample data to produce matrix of fake data
-		FakeData = ResampleData(BlockedData)
+		FakeData = ResampleData(Data)
 		FakeObservables[i,:] .= GetSecondaryObservables(FakeData)
 	end
 	
@@ -74,7 +74,12 @@ end
 # Main run
 
 function main()
-    FilePathIn = "./data/L=$L/beta=" * Beta * ".txt"
+	""""
+	Note: we take the data from the simulation folder, and not from the
+	processing folder, because we noticed that there is no need for blocking
+	(i.e. k=1 is enough).
+	"""
+    FilePathIn = "../simulations/data/L=$L/beta=" * Beta * ".txt"
     FilePathOut = "../analysis/data/L=$L.txt"
 		
 	"""
@@ -84,12 +89,12 @@ function main()
 	eChi = error on Magnetic Susceptibility
 	"""
 	
-	BlockedData = readdlm(FilePathIn, ',', Float64, comments=true)
-	U, MagnetizationVariance = GetSecondaryObservables(BlockedData)
+	Data = readdlm(FilePathIn, ',', Float64, comments=true)
+	U, MagnetizationVariance = GetSecondaryObservables(Data)
 	
     # Susceptibility gets a factor (beta) L^D, ignore (beta)
 	Chi = L^2 * MagnetizationVariance
-	eU, eChi = GetBootstrapErrors(BlockedData,R)
+	eU, eChi = GetBootstrapErrors(Data,R)
 
     open(FilePathOut, "a") do io
 		writedlm(io, [Beta U eU Chi eChi], ',')

@@ -86,14 +86,14 @@ function main()
     	BlockLengths = [parse(Int64, i) for i in split(UserLength)]
     	
     	FilePathOut = "./data/blocking_std_dev.txt"
-        open(FilePathOut, "a") do io
-            write(io, "# L, β, k (block length), σ_m (std dev of magnetization) [generated on: ", Dates.format(now(), "yyyy-mm-dd HH:MM:SS"), "]\n")
-        end
     	for k in BlockLengths
     		BlockedData = BlockData(Data, k)
-    		MagStdDev = std(BlockedData[:, 2], corrected=true)
+    		EnergyStdDev = std(BlockedData[:, 1], corrected=true) / sqrt(size(BlockedData, 1))
+    		MagStdDev = std(BlockedData[:, 2], corrected=true) / sqrt(size(BlockedData, 1))
+    		Mag2StdDev = std(BlockedData[:, 3], corrected=true) / sqrt(size(BlockedData, 1))
+    		Mag4StdDev = std(BlockedData[:, 4], corrected=true) / sqrt(size(BlockedData, 1))
     		open(FilePathOut, "a") do io
-    			writedlm(io, [L Beta k MagStdDev], ',')
+    			writedlm(io, [L Beta k EnergyStdDev MagStdDev Mag2StdDev Mag4StdDev], ',')
     		end
     	end
     end
