@@ -2,6 +2,7 @@
 
 using DelimitedFiles
 using Statistics
+using Dates
 
 # Setup
 
@@ -70,7 +71,7 @@ function main()
 	
 	FilePathIn = "../simulations/data/L=" * L * "/beta=" * Beta * ".txt"
 	
-    if Bool(UserSelection)
+    if Bool(UserSelection) # Program setting 1. Save blocked data to files under /processing/L= etc.
     	Data = readdlm(FilePathIn, ',', Float64, comments=true)
     	k = parse(Int64, UserLength)
     	BlockedData = BlockData(Data, k)
@@ -80,11 +81,14 @@ function main()
             write(io, "# Energy, Magnetization, Magnetization2, Magnetization4\n")
             writedlm(io, BlockedData, ',')
     	end
-    else
+    else # Program setting 0. Save to blocking_std_dev.txt to evaluate optimal block length.
     	Data = readdlm(FilePathIn, ',', Float64, comments=true)
     	BlockLengths = [parse(Int64, i) for i in split(UserLength)]
     	
     	FilePathOut = "./data/blocking_std_dev.txt"
+        open(FilePathOut, "a") do io
+            write(io, "# L, β, k (block length), σ_m (std dev of magnetization) [generated on: ", Dates.format(now(), "yyyy-mm-dd HH:MM:SS"), "]\n")
+        end
     	for k in BlockLengths
     		BlockedData = BlockData(Data, k)
     		MagStdDev = std(BlockedData[:, 2], corrected=true)
