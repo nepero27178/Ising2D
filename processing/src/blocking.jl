@@ -41,8 +41,6 @@ else
     UserSelection = parse(Int64, UserInput[1])	# User selection
     L = UserInput[2]							# Lattice Size
     Beta = UserInput[3]							# Temperature
-#    FilePathIn = UserInput[2]	        		# Data file
-#    FilePathOut = UserInput[3]					# Output file
     UserLength = UserInput[4]					# Block length
 end
 
