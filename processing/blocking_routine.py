@@ -2,23 +2,27 @@
 
 import numpy as np
 import os
+
+# Get repo root
+import git
+cwd = os.getcwd()
+repo = git.Repo('.', search_parent_directories=True)
+
+# Import parameters
 import sys
-sys.path.append('../simulations/')
+sys.path.append(repo.working_tree_dir + "/simulations/")
 from simulations_routine import parameters, number_of_beta
-from pathlib import Path # to manage file paths
+# from pathlib import Path # to manage file paths
+
+# Python modules for analysis
 import matplotlib.pyplot as plt
 from datetime import datetime
-
-# Go to right directory
-abspath = os.path.abspath(__file__)
-dname = os.path.dirname(abspath)
-os.chdir(dname)
 
 # Define the block lengths (CHANGE!)
 block_lengths = "\"1 2 3 4\""
 optimal_block_length = 100
 
-file_path_out = "./data/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
+file_path_out = repo.working_tree_dir + "/processing/data/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
 with open(file_path_out, "w") as file:
     # Write the header line to the file with the current date and time
     file.write(f"# L, beta, k, sigma_e, sigma_m, sigma_m2, sigma_m4 [calculated {datetime.now()}]\n")
@@ -28,11 +32,17 @@ with open(file_path_out, "w") as file:
 for L, beta_min, beta_max in parameters:
     Path(f"./data/L={L}").mkdir(exist_ok=True) # exist_ok prevents errors if the folder already exists
     for beta in np.linspace(beta_min, beta_max, number_of_beta):
-        shell_command = fr"julia ./src/blocking.jl 0 {L} {beta} {block_lengths}"	
+        shell_command = "julia " + repo.working_tree_dir + fr"/processing/src/blocking.jl 0 {L} {beta} {block_lengths}"	
         os.system(f"{shell_command}")
+        
+# Get back
+os.chdir(cwd)
+
+--------------------------------------------------------------------------------
 
 # Read and plot the data to determine optimal block length
-std_dev_file = "./data/blocking_std_dev.txt"
+# Identical to file_path_out !!
+std_dev_file = repo.working_tree_dir + "/processing/data/blocking_std_dev.txt"
 
 L_data, beta_data, k_data, sigma_e_data, sigma_m_data, sigma_m2_data, sigma_m4_data = np.loadtxt(std_dev_file, delimiter=",", unpack=True)
 
@@ -73,6 +83,6 @@ def plot_std(observable):
             ax[i].legend(loc="upper right")
 
     ax[-1].set_xlabel(r"Block length $k$")
-    plt.savefig("./data/blocking_std_dev_plot.pdf")
+    plt.savefig(repo.working_tree_dir + "/processing/data/blocking_std_dev_plot.pdf")
 
 plot_std("magnetization2")
