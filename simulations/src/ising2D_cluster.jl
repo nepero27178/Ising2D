@@ -1,3 +1,5 @@
+#!/usr/bin/julia
+
 using Logging
 using LinearAlgebra
 include("./functions.jl")
@@ -33,6 +35,7 @@ function main()
         # Set up lattice
         LatticeConfiguration = SetLattice(L)
         ExpansionProbability = 1 - exp(-2*Beta)
+        AllNeighbours = PrecalculateNeighboursTriangle(L)
         
         Energy = GetEnergy(L, LatticeConfiguration)
         @info "Initial energy = $Energy"
@@ -42,7 +45,7 @@ function main()
         # Naked run: stash thermalization without any measurement, just update,
         # don't measure thermal acceptance
         for _ in 1:ThermN
-            NextClusterStep(L, LatticeConfiguration, ExpansionProbability)
+            NextClusterStep!(L, LatticeConfiguration, ExpansionProbability, AllNeighbours)
         end
         
         # Actual run: simulate 2D-Ising
@@ -52,7 +55,7 @@ function main()
             # in energy space
             
             for j in 1:(L^2) 
-                NextClusterStep(L, LatticeConfiguration, ExpansionProbability)
+                NextClusterStep!(L, LatticeConfiguration, ExpansionProbability, AllNeighbours)
             end
             
             # Calculate and store:

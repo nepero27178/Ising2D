@@ -51,7 +51,7 @@ function main()
         
         # Naked run: stash thermalization 
         for _ in 1:ThermN
-            NextMetropolisStep(L, LatticeConfiguration,
+            NextMetropolisStep!(L, LatticeConfiguration,
                                 StepAcceptabilities, AcceptedStepsThermalization)
         end
 
@@ -63,7 +63,7 @@ function main()
             # Calculate energy after N^2 updates not to have steps too short
             # in energy space
             for j in 1:(L^2)
-                NextMetropolisStep(L, LatticeConfiguration,StepAcceptabilities,AcceptedSteps)
+                NextMetropolisStep!(L, LatticeConfiguration,StepAcceptabilities,AcceptedSteps)
             end
             # Calculate and store:
             # Energy and magnetization

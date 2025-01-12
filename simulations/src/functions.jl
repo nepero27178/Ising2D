@@ -4,7 +4,7 @@
 
 # Set initial lattice
 
-function SetLattice(L::Int64)
+function SetLattice(L::Int64)::Matrix{Int8}
     """Create a lattice represented as a matrix of size (L,L), initialized to +1."""
     LatticeConfiguration = ones(L,L)
     return LatticeConfiguration
@@ -81,10 +81,29 @@ function GetNeighboursTriangle(L::Int64, Site::Tuple{Int64, Int64})
     return Neighbours
 end
 
+function PrecalculateNeighboursTriangle(L::Int64)
+    """
+    Pre-calculate the neighbors for all sites in the triangular lattice.
+    Returns a 2D array where each element contains a list of neighboring sites for that lattice site.
+    """
+    
+    # Create an empty 2D array where each site has an array of neighbors
+    AllNeighbours = Array{Vector{Tuple{Int64, Int64}}}(undef, L, L)
+    
+    # Populate the array 
+    for i in 1:L
+        for j in 1:L
+            AllNeighbours[i, j] = GetNeighboursTriangle(L, (i,j))
+        end
+    end
+    
+    return AllNeighbours
+end
+
 # Single Metropolis update
 
-function NextMetropolisStep(L::Int64,
-                            LatticeConfiguration::Matrix{Float64},
+function NextMetropolisStep!(L::Int64,
+                            LatticeConfiguration::Matrix{Int8},
                             StepAcceptabilities::Array{Float64},
                             AcceptedSteps::Array{Int64})
     """
@@ -117,22 +136,24 @@ end
 
 # Cluster Metropolis update (Wolff's algorithm)
 
-function NextClusterStep(
+function NextClusterStep!(
             L::Int64,
-            LatticeConfiguration::Matrix{Float64}, 
-			ExpansionProbability::Float64)
+            LatticeConfiguration::Matrix{Int8}, 
+			ExpansionProbability::Float64,
+            AllNeighbours::Array{Vector{Tuple{Int64, Int64}}})
     """Next cluster step. Note: the variable LatticeConfiguration gets updated when calling GrowCluster"""
     
     StartingSite = (rand(1:L), rand(1:L))
     
-    GrowCluster(L, LatticeConfiguration, ExpansionProbability, 
-    			  StartingSite)
+    GrowCluster!(L, LatticeConfiguration, ExpansionProbability, 
+    			  StartingSite, AllNeighbours)
 end
 
-function GrowCluster(L::Int64,
-                     LatticeConfiguration::Matrix{Float64},
+function GrowCluster!(L::Int64,
+                     LatticeConfiguration::Matrix{Int8},
                      ExpansionProbability::Float64,
-                     Site::Tuple{Int64, Int64})
+                     Site::Tuple{Int64, Int64},
+                     AllNeighbours::Array{Vector{Tuple{Int64, Int64}}})
     """
     Key idea: we start at some site with spin +1 (for example).
     1) Save site spin as comparing variable for next steps;
@@ -147,7 +168,8 @@ function GrowCluster(L::Int64,
     """
     
     SiteSpin = LatticeConfiguration[Site...]
-    Neighbours = GetNeighboursTriangle(L, Site)
+    # Neighbours = GetNeighboursTriangle(L, Site) # old version (before precalculation)
+    Neighbours = AllNeighbours[Site...]
     LatticeConfiguration[Site...] *= -1 # flip
     
     for NeighbourSite in Neighbours
@@ -155,8 +177,8 @@ function GrowCluster(L::Int64,
              && rand() < ExpansionProbability 
              # these conditions imply NeighbourSite ∉ Cluster already
              )
-             GrowCluster(L, LatticeConfiguration, 
-        		           ExpansionProbability, NeighbourSite)
+             GrowCluster!(L, LatticeConfiguration, 
+        		           ExpansionProbability, NeighbourSite, AllNeighbours)
         end
     end
     # Note: no return, since the function updates LatticeConfiguration
@@ -168,7 +190,7 @@ end
 
 # Extract energy from lattice configuration
 
-function GetEnergy(L::Int64, LatticeConfiguration::Matrix{Float64})
+function GetEnergy(L::Int64, LatticeConfiguration::Matrix{Int8})::Float64
 
     """
     In order to calculate the energy of the Ising lattice, we iterate over the
@@ -195,7 +217,7 @@ end
 
 # Extract magnetization from lattice configuration
 
-function GetMagnetization(L::Int64, LatticeConfiguration::Matrix{Float64})
+function GetMagnetization(L::Int64, LatticeConfiguration::Matrix{Int8})::Float64
     """
     The magnetization is the sum of the matrix elements per unit volume.
     """
