@@ -27,9 +27,6 @@ def quadratic_fit_chi(beta, chi, e_chi):
     Output:
         best parameters, with errors, and chi^2.
     """
-    
-    # TODO Implement beta data selection
-    
     # Fit function
     def fit_func(x, a, b, c):
         return a * (x - b)**2 + c
