@@ -54,7 +54,7 @@ function main()
             # Calculate energy after N^2 updates not to have steps too short
             # in energy space
             
-            for j in 1:(L^2) 
+            for j in 1:1 # (L^2) # TODO CHANGE 
                 NextClusterStep!(L, LatticeConfiguration, ExpansionProbability, AllNeighbours)
             end
             

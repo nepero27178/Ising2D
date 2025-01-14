@@ -1,88 +1,206 @@
 #!/usr/bin/python3
 
+# ------------------------------------------------------------------------------
+# PART 1: Import modules and variables
+# ------------------------------------------------------------------------------
+
 import numpy as np
 import os
+from pathlib import Path 		# Manage file paths
 
 # Get repo root
 import git
-cwd = os.getcwd()
 repo = git.Repo('.', search_parent_directories=True)
 
 # Import parameters
 import sys
-sys.path.append(repo.working_tree_dir + "/simulations/")
-from simulations_routine import parameters, number_of_beta
-# from pathlib import Path # to manage file paths
+sys.path.append(repo.working_tree_dir + "/setup/")
+from setup import SIZES, SAMPLING_PARAMETERS
 
+# Read which simulations have been performed
+routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters.txt"
+_, left, right = np.loadtxt(routine_parameters_filepath, delimiter=',', unpack=True)
+ROUTINE_PARAMETERS = []
+
+for i in range(len(SIZES)):
+	ROUTINE_PARAMETERS.append((SIZES[i], left[i], right[i]))
+		
 # Python modules for analysis
 import matplotlib.pyplot as plt
+# plt.style.use("science")
 from datetime import datetime
+		
+# ------------------------------------------------------------------------------
+# PART 2: Define functions for blocking
+# ------------------------------------------------------------------------------
 
-# Define the block lengths (CHANGE!)
-block_lengths = "\"1 2 3 4\""
-optimal_block_length = 100
+def try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
-file_path_out = repo.working_tree_dir + "/processing/data/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
-with open(file_path_out, "w") as file:
-    # Write the header line to the file with the current date and time
-    file.write(f"# L, beta, k, sigma_e, sigma_m, sigma_m2, sigma_m4 [calculated {datetime.now()}]\n")
+	'''
+	try_blocking_lengths runs the julia blocking.jl script over each blocking
+	length specified in \"Ising2D/setup/setup.pt\". These lenghts are imported,
+	converted to string, and passed to the julia script as input arguments. The
+	result of the double for cycle is a single file, at output_data_filepath,
+	where for each L, beta and block length k standard deviations of different
+	observables are saved.
+	'''
 
-# Run the blocking algorithm in Julia for each set of data and block length.
-# The data are stored in the file /processing/data/blocking_std_dev.txt
-for L, beta_min, beta_max in parameters:
-    Path(f"./data/L={L}").mkdir(exist_ok=True) # exist_ok prevents errors if the folder already exists
-    for beta in np.linspace(beta_min, beta_max, number_of_beta):
-        shell_command = "julia " + repo.working_tree_dir + fr"/processing/src/blocking.jl 0 {L} {beta} {block_lengths}"	
-        os.system(f"{shell_command}")
-        
-# Get back
-os.chdir(cwd)
+	# Import samping parameters
+	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
+	block_trial_lengths = SAMPLING_PARAMETERS["block_trial_lengths"]
+	string = ""
+	for length in block_trial_lengths:
+		string = string + f"{length} "
+		
+	block_trial_lengths = "\"" + string[:-1] + "\""
+	
+	output_data_filepath = repo.working_tree_dir + "/processing/data/std-dev-analysis/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
+	
+	Path(repo.working_tree_dir + "/processing/data/std-dev-analysis/").mkdir(exist_ok=True)
+	with open(output_data_filepath, "w") as output_data_file:
+		# Write the header line to the file with the current date and time
+		output_data_file.write(f"# L, beta, k, sigma_e, sigma_m, sigma_m2, sigma_m4 [calculated {datetime.now()}]\n")
 
---------------------------------------------------------------------------------
+	# Run the blocking algorithm in Julia for each set of data and block length.
+	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
+	for L, beta_min, beta_max in ROUTINE_PARAMETERS:
+		
+		julia_script_filepath = repo.working_tree_dir + "/processing/src/blocking.jl"				# julia script filepath
+		
+		for beta in np.linspace(beta_min, beta_max, number_of_beta):
+		
+			input_data_filepath = repo.working_tree_dir + f"/simulations/data/L={L}/beta={beta}.txt"	# Use raw data
+			shell_command = "julia " + julia_script_filepath + f" {L} {beta} {block_trial_lengths} " + input_data_filepath + " " + output_data_filepath + " --try"
+			os.system(f"{shell_command}")
+			
+	print("Done! Check the file at " + output_data_filepath + "\n")
+	return None
+	
+def plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
-# Read and plot the data to determine optimal block length
-# Identical to file_path_out !!
-std_dev_file = repo.working_tree_dir + "/processing/data/blocking_std_dev.txt"
+	'''
+	plot_std_dev plots the data calculated by try_blocking_lengths by directly
+	reading the saved file.
+	'''
+	
+	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
+	std_dev_filepath = repo.working_tree_dir + "/processing/data/std-dev-analysis/blocking_std_dev.txt"
+	sizes, betas, lengths, sigma_e, sigma_m, sigma_m2, sigma_m4 = np.loadtxt(std_dev_filepath, delimiter=',', unpack=True)
+	
+	sigma = [sigma_e, sigma_m, sigma_m2, sigma_m4]
+	observables_names = [r"$\sigma_e$", r"$\sigma_m$", r"$\sigma_m^2$", r"$\sigma_m^4$"]
+    	
+	for L, beta_min, beta_max in ROUTINE_PARAMETERS:
+		# ax[i].text(0.5, 0.9, f"L = {int(L)}", transform=ax[i].transAxes, fontsize=12, horizontalalignment='center')
+	
+		for beta in np.linspace(beta_min, beta_max, number_of_beta):
+			indices = (sizes == L) & (betas == beta)
+			
+			fig, ax = plt.subplots(len(sigma), 1, figsize=(8, 4*len(sigma)), sharex=True)
+			
+			for i in range(len(sigma)):
 
-L_data, beta_data, k_data, sigma_e_data, sigma_m_data, sigma_m2_data, sigma_m4_data = np.loadtxt(std_dev_file, delimiter=",", unpack=True)
+				std_dev = sigma[i]
+				ax[i].set_ylabel(r"Standard deviation " + observables_names[i])
+	
+				plotted_point = ax[i].plot(lengths[indices], std_dev[indices], ".", label=fr"$\beta$ = {beta:.3f}")	# Points
+				ax[i].plot(lengths[indices], std_dev[indices], "-",alpha=0.5, color=plotted_point[0].get_color()) 	# Lines connecting the points
 
-def plot_std(observable):
-    # Find the optimal block length. The function makes a plot with one subplot for each value
-    # of L. In the subplot, the standard deviation is plotted as a function of block length, 
-    # for each value of beta.
+				ax[i].legend(loc="upper right")
+			
+			plt.savefig(repo.working_tree_dir + f"/processing/data/std-dev-analysis/blocking_std_dev_plot_beta={beta}.pdf")
+			plt.close()
+	
+	print("Done! Check the plots at " + repo.working_tree_dir + f"/processing/data/std-dev-analysis/" + "\n")
+	return None
+	
+def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
-    # Choose observable
-    if observable == "magnetization":
-        observable = sigma_m_data
-    elif observable == "magnetization2":
-        observable = sigma_m2_data
-    elif observable == "magnetization4":
-        observable = sigma_m4_data
-    elif observable == "energy":
-        observable = sigma_e_data
-    else:
-        raise ValueError("Invalid observable. Choose 'magnetization', 'magnetization2', 'magnetization4', 'energy'.")
+	'''
+	blocking_data runs the julia blocking.jl script just once for the optimal 
+	block length in \"Ising2D/setup/setup.pt\". The result of the double for 
+	cycle is a system of files specular to that of \"Ising2D/simulations/data\",
+	at output_data_filepath, where for each L, and beta sampled values are
+	blocked and saved for the specified optimal block length.
+	'''
 
-    plt.style.use("science")
-    number_of_subplots = np.unique(L_data).size
+	# Import sampling parameters
+	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
+	block_optimal_length = SAMPLING_PARAMETERS["block_optimal_length"]
+	Path(repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}").mkdir(exist_ok=True)
 
-    fig, ax = plt.subplots(number_of_subplots, 1, figsize=(8, 4*number_of_subplots), sharex=True)
+	# Run the blocking algorithm in Julia for each set of data and block length.
+	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
+	for L, beta_min, beta_max in ROUTINE_PARAMETERS:
+		
+		for beta in np.linspace(beta_min, beta_max, number_of_beta):
+		
+			input_data_filepath = repo.working_tree_dir + f"/simulations/data/L={L}/beta={beta}.txt"										# Use raw data
+			output_data_filepath = repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}/L={L}/beta={beta}.txt" 	# Path to file where data computed by blocking.jl will be stored
+			
+			Path(repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}/L={L}").mkdir(exist_ok=True)
+			with open(output_data_filepath, "w") as output_data_file:
+				# Write the header line to the file with the current date and time
+				output_data_file.write(f"# e, m, m2, m4 [calculated {datetime.now()}]\n")
+				
+			julia_script_filepath = repo.working_tree_dir + "/processing/src/blocking.jl"			# Run julia script
+			shell_command = "julia " + julia_script_filepath + f" {L} {beta} {block_optimal_length} " + input_data_filepath + " " + output_data_filepath + " --use-optimal"
+			os.system(f"{shell_command}")
+	
+	print("Done! Check the files at " + repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}/" + "\n")
+	return None
 
-    for i, L in enumerate(np.unique(L_data)): # i runs from 0 to number_of_subplots-1.
-                                              # L runs over the unique values of L
-        ax[i].text(0.5, 0.9, f"L = {int(L)}", transform=ax[i].transAxes, 
-                   fontsize=12, horizontalalignment='center')
-        ax[i].set_ylabel(r"Standard deviation $\sigma_m$")
+# ------------------------------------------------------------------------------
+# PART 3: Run optimal blocking OR trial blocking
+# ------------------------------------------------------------------------------
 
-        for beta in np.unique(beta_data):
-            indices_with_L_and_beta = (L_data == L) & (beta_data == beta)
-            plotted_point = ax[i].plot(k_data[indices_with_L_and_beta], observable[indices_with_L_and_beta],  
-                       ".", label=fr"$\beta$ = {beta:.3f}")
-            ax[i].plot(k_data[indices_with_L_and_beta], observable[indices_with_L_and_beta],  
-                       "-",alpha=0.5, color=plotted_point[0].get_color()) # lines connecting the points
-            ax[i].legend(loc="upper right")
+if __name__ == "__main__":
 
-    ax[-1].set_xlabel(r"Block length $k$")
-    plt.savefig(repo.working_tree_dir + "/processing/data/blocking_std_dev_plot.pdf")
+	# Read user mode
+	error_message = "Error: no option specified \n\
+Use --use-optimal as a call option to use the previously computed optimal block length \n\
+Use --try as a call option to try different block lengths \n\
+Use --plot as a call option to plot previously calculated standard deviations of observables \n\
+Use --try-plot as a call option to try different block lengths and plot standard deviations of observables \n\
+\n\
+To change the used optimal block length, or to set trial lengths, modify their values in \"Ising2D/setup/setup.py\".\n"
 
-plot_std("magnetization2")
+	if len(sys.argv) != 2:
+		raise ValueError(error_message)
+	else:
+		user_mode = sys.argv[1]
+		if user_mode == "--try":
+			
+			# Comment here for debugging
+			try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			
+			# Uncomment here for debugging
+			# print(ROUTINE_PARAMETERS)
+			
+		elif user_mode == "--plot":
+			
+			# Comment here for debugging
+			plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			
+			# Uncomment here for debugging
+			# print(ROUTINE_PARAMETERS)
+		
+		elif user_mode == "--try-plot":
+			
+			# Comment here for debugging
+			try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			
+			# Uncomment here for debugging
+			# print(ROUTINE_PARAMETERS)
+			
+		elif user_mode == "--use-optimal":
+
+			# Comment here for debugging
+			block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			
+			# Uncomment here for debugging
+			# print(ROUTINE_PARAMETERS)
+			
+		else:
+			raise ValueError(error_message)

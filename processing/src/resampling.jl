@@ -3,14 +3,16 @@
 using DelimitedFiles
 using Statistics
 
-if length(ARGS) != 3
+if length(ARGS) != 5
     println("How to use this program?
 Type the following: \$ julia ./code/secondary-observables.jl arg1 arg2 arg3
 Where:
 · arg1 = lattice size
 · arg2 = beta
 · arg3 = number of resamples
-Note that L is the linear size of lattice. 
+· arg4 = input data filepath (blocked, or raw)
+· arg5 = output data filepath
+Note that L is the linear size of lattice.
 This code's output is a single file, named L=<your-L>, and saved in 
 
 		\"Ising2D/analysis/data/L=<your-L>.txt\"
@@ -27,9 +29,11 @@ susceptibility.
 #	exit()
 else
     UserInput = ARGS
-    L = parse(Int64,UserInput[1])	# Lattice Size
-    Beta = UserInput[2]				# Temperature
-    R = parse(Int64,UserInput[3])   # Resampling steps
+    L = parse(Int64,UserInput[1])		# Lattice Size
+    Beta = UserInput[2]					# Temperature
+    R = parse(Int64,UserInput[3])   	# Resampling steps
+    InputDataFilepath = UserInput[4]  	# Input data filepath
+    OutputDataFilepath = UserInput[5]  	# Output data filepath
 end
 
 # Functions to extract secondary observables and their errors
@@ -74,29 +78,26 @@ end
 # Main run
 
 function main()
-	""""
+
+	"""
 	Note: we take the data from the simulation folder, and not from the
 	processing folder, because we noticed that there is no need for blocking
 	(i.e. k=1 is enough).
-	"""
-    FilePathIn = "../simulations/data/L=$L/beta=" * Beta * ".txt"
-    FilePathOut = "../analysis/data/L=$L.txt"
-		
-	"""
+
 	U = Binder's Cumulant
 	eU = error on Binder's Cumulant
 	Chi = Magnetic Susceptibility
 	eChi = error on Magnetic Susceptibility
 	"""
 	
-	Data = readdlm(FilePathIn, ',', Float64, comments=true)
+	Data = readdlm(InputDataFilepath, ',', Float64, comments=true)
 	U, MagnetizationVariance = GetSecondaryObservables(Data)
 	
     # Susceptibility gets a factor (beta) L^D, ignore (beta)
 	Chi = L^2 * MagnetizationVariance
 	eU, eChi = GetBootstrapErrors(Data,R)
 
-    open(FilePathOut, "a") do io
+    open(OutputDataFilepath, "a") do io
 		writedlm(io, [Beta U eU Chi eChi], ',')
     end
 end

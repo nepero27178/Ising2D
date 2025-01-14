@@ -12,7 +12,7 @@ of the simulations.
 
 import os
 import sys
-
+from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt
 # import scienceplots
@@ -26,23 +26,11 @@ cwd = os.getcwd()
 repo = git.Repo('.', search_parent_directories=True)
 
 # Import parameters
-from setup import SIZES
-
-# Expected magnetic susceptibility parameters
-PARAMETERS = {
-	# Physical parameters
-	"beta_c" : np.log(3)/4,
-	"nu" : 1,
-	"gamma" : 7/4,
-	# Numerical parameters
-	"x_0" : -0.1,
-	"y_0" : 0.1,
-	"c_0" : 0
-}
+from setup import SIZES, THEORETICAL_CRITICAL_PARAMETERS
 
 # Functions
 
-def get_theoretical_values(PARAMETERS,SIZES):
+def get_theoretical_values(THEORETICAL_CRITICAL_PARAMETERS,SIZES):
 	'''
 	Expected maxima of the magnetic susceptibility are stored inside the file
 	theoretical_estimations.txt, and calculated via the finite size scaling
@@ -53,17 +41,17 @@ def get_theoretical_values(PARAMETERS,SIZES):
 
 	# Re-initialize file
 	with open(filepath,"w") as file:
-	    file.write("# L, beta_pc, chi_max\n")
+	    file.write("# L, beta_pc, chi_max [calculated {datetime.now()}]\n")
 	
 	# Physical parameters
-	beta_c = PARAMETERS['beta_c']
-	nu = PARAMETERS['nu']
-	gamma = PARAMETERS['gamma']
+	beta_c = THEORETICAL_CRITICAL_PARAMETERS['beta_c']
+	nu = THEORETICAL_CRITICAL_PARAMETERS['nu']
+	gamma = THEORETICAL_CRITICAL_PARAMETERS['gamma']
 
 	# Numerical parameters
-	x_0 = PARAMETERS['x_0'] 
-	y_0 = PARAMETERS['y_0']
-	c_0 = PARAMETERS['c_0']
+	x_0 = THEORETICAL_CRITICAL_PARAMETERS['x_0'] 
+	y_0 = THEORETICAL_CRITICAL_PARAMETERS['y_0']
+	c_0 = THEORETICAL_CRITICAL_PARAMETERS['c_0']
 
 	# Initialize theoretical values
 	theoretical_values = np.zeros([len(SIZES),3])
@@ -87,10 +75,11 @@ def get_theoretical_values(PARAMETERS,SIZES):
 		
 	return theoretical_values
 	
-def plot_theoretical_values(theoretical_values,ranges):
+def plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS):
 	'''
 	Plot the values calculated via get_theoretical_values; together, are also
-	plotted the simulations ranges stored in the imported variable RANGES
+	plotted the simulations ranges stored in the imported variable 
+	ROUTINE_PARAMETERS.
 	'''
 	
 	beta_pc = theoretical_values[:,1]
@@ -108,9 +97,9 @@ def plot_theoretical_values(theoretical_values,ranges):
 		L = int(SIZES[i])
 		r = np.linspace(0,1,len(SIZES))[i]
 		
-		if ranges:
-			left_side = ranges[i][1]
-			right_side = ranges[i][2]
+		if ROUTINE_PARAMETERS:
+			left_side = ROUTINE_PARAMETERS[i][1]
+			right_side = ROUTINE_PARAMETERS[i][2]
 			ax.plot([left_side, right_side],[chi_max[i], chi_max[i]],'-',color=(r,1-r,r))
 			
 		# Plot chi_max vs beta_pc
@@ -135,23 +124,20 @@ def plot_theoretical_values(theoretical_values,ranges):
 	return None
 
 if __name__ == "__main__":
-	theoretical_values = get_theoretical_values(PARAMETERS,SIZES)
+	theoretical_values = get_theoretical_values(THEORETICAL_CRITICAL_PARAMETERS,SIZES)
 	
-	if len(sys.argv)!=2:
-		print("Error: no option specified \n\
+	error_message = "Error: no option specified \n\
 Use --plot-ranges as a call option to plot simulations ranges \n\
-Use --hide-ranges as a call option not to plot simulations ranges \n")
-		raise AssertionError()
+Use --hide-ranges as a call option not to plot simulations ranges \n"
+	if len(sys.argv)!=2:
+		raise ValueError(error_message)
 	else:
 		use_ranges = sys.argv[1]
 		if use_ranges == "--plot-ranges":
-			from routine_parameters import ranges
-			plot_theoretical_values(theoretical_values,ranges)
+			from routine_parameters import ROUTINE_PARAMETERS
+			plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS)
 		elif use_ranges == "--hide-ranges":
-			ranges = False
-			plot_theoretical_values(theoretical_values,ranges)
+			ROUTINE_PARAMETERS = False
+			plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS)
 		else:
-			print("Error: no option specified \n\
-Use --plot-ranges as a call option to plot simulations ranges \n\
-Use --hide-ranges as a call option not to plot simulations ranges \n")
-			raise AssertionError()
+			raise ValueError(error_message)

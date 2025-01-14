@@ -3,7 +3,7 @@
 import os
 import numpy as np
 from matplotlib import pyplot as plt
-plt.style.use("science")
+#plt.style.use("science")
 
 # Get repo root
 import git
@@ -12,13 +12,22 @@ repo = git.Repo('.', search_parent_directories=True)
 
 # Import parameters
 import sys
-sys.path.append(repo.working_tree_dir + "/simulations/")
-from simulations_routine import parameters
+sys.path.append(repo.working_tree_dir + "/setup/")
 
-# Set quantities estimated by the fits (exponent = gamma/nu)
-EXPONENT, NU, BETA_C = 1.75, 1.0, 0.27 # CHANGE!
+from setup import SIZES, THEORETICAL_CRITICAL_PARAMETERS
+beta_c = THEORETICAL_CRITICAL_PARAMETERS["beta_c"]
+nu = THEORETICAL_CRITICAL_PARAMETERS["nu"]
+gamma = THEORETICAL_CRITICAL_PARAMETERS["gamma"]
+
+routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters.txt"
+_, left, right = np.loadtxt(routine_parameters_filepath, delimiter=',', unpack=True)
+ROUTINE_PARAMETERS = []
+
+for i in range(len(SIZES)):
+	ROUTINE_PARAMETERS.append((SIZES[i], left[i], right[i]))
 
 def plot_chi():
+
     """
     Plot the magnetic susceptibility as a function of beta.
     The data are retrieved from the /analysis/data folder.
@@ -31,7 +40,8 @@ def plot_chi():
     # Initialize plot
     fig, ax = plt.subplots(1, 1, figsize=(4,3) )
 
-    for set in parameters: # i.e. for each value of L
+    for set in ROUTINE_PARAMETERS: # i.e. for each value of L
+    
         # Load data
         L = set[0]
         data_filepath = repo.working_tree_dir + f"/analysis/data/L={L}.txt"
@@ -49,7 +59,8 @@ def plot_chi():
 
     plt.savefig(repo.working_tree_dir + "/analysis/magnetic-susceptibility/susceptibility.pdf")
 
-def plot_fss_chi(exponent, nu, beta_c):
+def plot_fss_chi(beta_c,nu,gamma):
+
     """"
     Plot the finite size scaling of the magnetic susceptibility. (i.e. collapse plot).
     The data are retrieved from the /analysis/data folder.
@@ -62,10 +73,9 @@ def plot_fss_chi(exponent, nu, beta_c):
     """
 
     # Initialize plot
-    plt.style.use("science")
     fig, ax = plt.subplots(1, 1, figsize=(4,3) )
 
-    for set in parameters: # i.e. for each value of L
+    for set in ROUTINE_PARAMETERS: # i.e. for each value of L
         # Load data
         L = set[0]
         data_filepath = repo.working_tree_dir + f"/analysis/data/L={L}.txt"
@@ -73,7 +83,7 @@ def plot_fss_chi(exponent, nu, beta_c):
 
         # Define scaling variable and function to be plotted
         x_variable = (beta - beta_c) * L**(1/nu)
-        y_variable = chi / L**exponent
+        y_variable = chi / L**(gamma/nu)
         # TODO aggiungi errori
 
         # Plot FSS function
@@ -88,7 +98,7 @@ def plot_fss_chi(exponent, nu, beta_c):
 
 def main():
     plot_chi()
-    plot_fss_chi(EXPONENT, NU, BETA_C)
+    plot_fss_chi(beta_c,nu,gamma)
 
 if __name__ == "__main__":
     main()

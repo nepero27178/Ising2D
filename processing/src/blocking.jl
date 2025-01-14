@@ -4,16 +4,15 @@ using DelimitedFiles
 using Statistics
 using Dates
 
-# Setup
-
-if length(ARGS) != 4
-    println("How to use this program?
+ErrorMessage = "How to use this program?
 Type the following: \$ julia ./ising2D_metro.jl arg1 arg2 arg3 arg4
 Where:
-· arg1 = program setting 0/1 (see below)
-· arg2 = lattice size
-· arg3 = beta
-· arg4 = block lengths (setting 0) / length (setting 1)
+· arg1 = lattice size
+· arg2 = beta
+· arg3 = block length (program setting --use-optimal) / lengths (program setting --try) (see below)
+· arg4 = input data filepath (raw)
+· arg5 = output data filepath
+· arg6 = program setting: --use-optimal / --try (see below)
 Note: input and output paths are generated automatically based on L
 and beta.
 ---------------------------------------------------------------------
@@ -22,12 +21,12 @@ An iterative search for different block lengths is performed, and for
 each standard deviation of the magnetization is computed. The results
 for given L, beta, and k (block length) are stored in the file
 
-	../data/blocking_std_dev.txt
+	../data/std-dev-analysis/blocking_std_dev.txt
 	
-To set the different block lengths to check, use arg4 as a list of
+To set the different block lengths to check, use arg3 as a list of
 strings:
 
-e.g. arg4 = \"10 20 30 40\"
+e.g. arg3 = \"10 20 30 40\"
 
 (do not forget the quotation marks!)
 ---------------------------------------------------------------------
@@ -35,14 +34,21 @@ Program setting 1
 Data coming from the simulation file are blocked in blocks of length
 equal to arg4. Quotation marks are not needed in this settings. Data
 are saved in the corresponding folder inside processing/data/. 
-")
+"
+
+# Setup
+
+if length(ARGS) != 6
+    println(ErrorMessage)
     exit()
 else
     UserInput = ARGS
-    UserSelection = parse(Int64, UserInput[1])	# User selection
-    L = UserInput[2]							# Lattice Size
-    Beta = UserInput[3]							# Temperature
-    UserLength = UserInput[4]					# Block length
+    L = UserInput[1]							# Lattice Size
+    Beta = UserInput[2]							# Temperature
+    UserLengthString = UserInput[3]				# Block length (use optimal) or trial block lengths (use trial)
+    InputDataFilepath = UserInput[4]  			# Input data filepath
+    OutputDataFilepath = UserInput[5]  			# Output data filepath
+   	UserSelection = UserInput[6]				# User selection
 end
 
 # Blocking function
@@ -68,34 +74,51 @@ function BlockData(Data::Matrix{Float64}, BlockLength::Int64)
 end
 
 function main()
-	
-	FilePathIn = "../simulations/data/L=" * L * "/beta=" * Beta * ".txt"
-	
-    if Bool(UserSelection) # Program setting 1. Save blocked data to files under /processing/L= etc.
-    	Data = readdlm(FilePathIn, ',', Float64, comments=true)
-    	k = parse(Int64, UserLength)
-    	BlockedData = BlockData(Data, k)
+		
+    if UserSelection == "--use-optimal"
+    
+    	"""
+    	Use optimal mode: here we assume already to have computed the optimal
+    	block size, thus UserLengthString is a simple Int64 input.
+    	"""
     	
-    	FilePathOut = "./data/L=" * L * "/beta=" * Beta * ".txt"
-		open(FilePathOut, "w") do io
+    	Data = readdlm(InputDataFilepath, ',', Float64, comments=true)
+    	OptimalBlockLength = parse(Int64, UserLengthString)
+    	BlockedData = BlockData(Data, OptimalBlockLength)
+    	
+		open(OutputDataFilepath, "w") do io
             write(io, "# Energy, Magnetization, Magnetization2, Magnetization4\n")
             writedlm(io, BlockedData, ',')
     	end
-    else # Program setting 0. Save to blocking_std_dev.txt to evaluate optimal block length.
-    	Data = readdlm(FilePathIn, ',', Float64, comments=true)
-    	BlockLengths = [parse(Int64, i) for i in split(UserLength)]
+    
+    elseif UserSelection == "--try"
     	
-    	FilePathOut = "./data/blocking_std_dev.txt"
-    	for k in BlockLengths
-    		BlockedData = BlockData(Data, k)
+    	"""
+    	Use trial mode: here we need to compute many different trial lengths.
+    	User input is a string of different trial lengths, delimited in prompt
+    	by quotation marks \" length1 length2 ... \". Thus BlockLength input
+    	is a string type object, 
+    	"""
+    	
+    	Data = readdlm(InputDataFilepath, ',', Float64, comments=true)
+    	BlockLengths = [parse(Int64, i) for i in split(UserLengthString)]
+    	
+    	for TrialBlockLength in BlockLengths
+    
+    		BlockedData = BlockData(Data, TrialBlockLength)
     		EnergyStdDev = std(BlockedData[:, 1], corrected=true) / sqrt(size(BlockedData, 1))
     		MagStdDev = std(BlockedData[:, 2], corrected=true) / sqrt(size(BlockedData, 1))
     		Mag2StdDev = std(BlockedData[:, 3], corrected=true) / sqrt(size(BlockedData, 1))
     		Mag4StdDev = std(BlockedData[:, 4], corrected=true) / sqrt(size(BlockedData, 1))
-    		open(FilePathOut, "a") do io
-    			writedlm(io, [L Beta k EnergyStdDev MagStdDev Mag2StdDev Mag4StdDev], ',')
+    
+    		open(OutputDataFilepath, "a") do io
+    			writedlm(io, [L Beta TrialBlockLength EnergyStdDev MagStdDev Mag2StdDev Mag4StdDev], ',')
     		end
+    
     	end
+    else
+    	print(ErrorMessage)
+    	exit()
     end
 end
 
