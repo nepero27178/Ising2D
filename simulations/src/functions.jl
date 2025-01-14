@@ -6,7 +6,7 @@
 
 function SetLattice(L::Int64)::Matrix{Int8}
     """Create a lattice represented as a matrix of size (L,L), initialized to +1."""
-    LatticeConfiguration = ones(L,L)
+    LatticeConfiguration = ones(Int8, L,L)
     return LatticeConfiguration
 end
 
