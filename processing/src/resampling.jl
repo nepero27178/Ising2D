@@ -39,7 +39,7 @@ end
 # Functions to extract secondary observables and their errors
 
 function GetSecondaryObservables(Data::Matrix{Float64})
-	AvgAbsMag = mean(broadcast(abs,Data[:,2]))
+	AvgAbsMag = mean(Data[:,2])
 	AvgMag2 = mean(Data[:,3])
 	AvgMag4 = mean(Data[:,4])
 	

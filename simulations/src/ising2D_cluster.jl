@@ -29,8 +29,6 @@ end
 
 function main()
     @info "Working on L=$L, β=$Beta, N=$N"
-    DataFile = open(FilePath,"w")
-    write(DataFile,"# Energy, Magnetization, Magnetization2, Magnetization4\n")
     @time begin
         # Set up lattice
         LatticeConfiguration = SetLattice(L)
@@ -48,6 +46,8 @@ function main()
             NextClusterStep!(L, LatticeConfiguration, ExpansionProbability, AllNeighbours)
         end
         
+        DataFile = open(FilePath,"a")
+        
         # Actual run: simulate 2D-Ising
         for i in 1:N
 
@@ -63,10 +63,13 @@ function main()
             Energy = GetEnergy(L, LatticeConfiguration)
             Magnetization = GetMagnetization(L, LatticeConfiguration)
             
-            # Magnetization^2, Magnetization^4
+            # |Magnetization|, Magnetization^2, Magnetization^4
+            AbsMag = abs(Magnetization)
             Mag2 = Magnetization^2
             Mag4 = Magnetization^4
-            write(DataFile,"$Energy, $Magnetization, $Mag2, $Mag4\n")
+            
+            # Write on file
+            write(DataFile,"$Energy, $AbsMag, $Mag2, $Mag4\n")
         end
         
         close(DataFile)  

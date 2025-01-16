@@ -14,7 +14,7 @@ import git
 cwd = os.getcwd()
 repo = git.Repo('.', search_parent_directories=True)
 
-from setup import SIZES, MAX_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS
+from setup import SIZES, MAX_SIMULATION_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS
 
 # Critical temperature, analitically computed
 beta_c = THEORETICAL_CRITICAL_PARAMETERS["beta_c"]
@@ -60,14 +60,14 @@ def generate_routine_parameters():
 		
 		'''
 		# Generate linearly restricting interval around theoretical value
-		beta_min = float(beta_pc[i] - MAX_DEVIATION * (len(SIZES)-i)/len(SIZES))
-		beta_max = float(beta_pc[i] + MAX_DEVIATION * (len(SIZES)-i)/len(SIZES))
+		beta_min = float(beta_pc[i] - MAX_SIMULATION_DEVIATION * (len(SIZES)-i)/len(SIZES))
+		beta_max = float(beta_pc[i] + MAX_SIMULATION_DEVIATION * (len(SIZES)-i)/len(SIZES))
 		ranges.append((SIZES[i], beta_min, beta_max))
 		'''
 		
 		# Generate 1/L restricting interval around theoretical value
-		beta_min = float(beta_pc[i] - MAX_DEVIATION * np.min(SIZES)/SIZES[i])
-		beta_max = float(beta_pc[i] + MAX_DEVIATION * np.min(SIZES)/SIZES[i])
+		beta_min = beta_pc[i] - MAX_SIMULATION_DEVIATION * np.min(SIZES)/SIZES[i]
+		beta_max = beta_pc[i] + MAX_SIMULATION_DEVIATION * np.min(SIZES)/SIZES[i]
 		ROUTINE_PARAMETERS.append((SIZES[i], beta_min, beta_max))
 		
 		# Check critical temperature to fall into boundaries		

@@ -5,7 +5,7 @@ using Statistics
 using Dates
 
 ErrorMessage = "How to use this program?
-Type the following: \$ julia ./ising2D_metro.jl arg1 arg2 arg3 arg4
+Type the following: \$ julia ./ising2D_metro.jl arg1 arg2 arg3 arg4 arg5 arg6
 Where:
 · arg1 = lattice size
 · arg2 = beta
@@ -86,8 +86,7 @@ function main()
     	OptimalBlockLength = parse(Int64, UserLengthString)
     	BlockedData = BlockData(Data, OptimalBlockLength)
     	
-		open(OutputDataFilepath, "w") do io
-            write(io, "# Energy, Magnetization, Magnetization2, Magnetization4\n")
+		open(OutputDataFilepath, "a") do io
             writedlm(io, BlockedData, ',')
     	end
     

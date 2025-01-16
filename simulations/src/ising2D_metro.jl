@@ -75,6 +75,8 @@ function main()
             Mag2 = Magnetization^2
             Mag4 = Magnetization^4
             write(DataFile,"$Energy, $Magnetization, $Mag2, $Mag4\n")
+            
+            # TODO AbsMag, append on file
         end
         
         close(DataFile)

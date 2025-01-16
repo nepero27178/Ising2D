@@ -54,12 +54,12 @@ def try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 		
 	block_trial_lengths = "\"" + string[:-1] + "\""
 	
-	output_data_filepath = repo.working_tree_dir + "/processing/data/std-dev-analysis/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
+	output_data_filepath = repo.working_tree_dir + "/processing/std-dev-analysis/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
+	Path(repo.working_tree_dir + "/processing/std-dev-analysis/").mkdir(exist_ok=True)
 	
-	Path(repo.working_tree_dir + "/processing/data/std-dev-analysis/").mkdir(exist_ok=True)
 	with open(output_data_filepath, "w") as output_data_file:
 		# Write the header line to the file with the current date and time
-		output_data_file.write(f"# L, beta, k, sigma_e, sigma_m, sigma_m2, sigma_m4 [calculated {datetime.now()}]\n")
+		output_data_file.write(f"# L, beta, k, sigma_e, sigma_|m|, sigma_m2, sigma_m4 [calculated {datetime.now()}]\n")
 
 	# Run the blocking algorithm in Julia for each set of data and block length.
 	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
@@ -84,11 +84,11 @@ def plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 	'''
 	
 	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
-	std_dev_filepath = repo.working_tree_dir + "/processing/data/std-dev-analysis/blocking_std_dev.txt"
+	std_dev_filepath = repo.working_tree_dir + "/processing/std-dev-analysis/blocking_std_dev.txt"
 	sizes, betas, lengths, sigma_e, sigma_m, sigma_m2, sigma_m4 = np.loadtxt(std_dev_filepath, delimiter=',', unpack=True)
 	
 	sigma = [sigma_e, sigma_m, sigma_m2, sigma_m4]
-	observables_names = [r"$\sigma_e$", r"$\sigma_m$", r"$\sigma_m^2$", r"$\sigma_m^4$"]
+	observables_names = [r"$\sigma_e$", r"$\sigma_{|m|}$", r"$\sigma_{m^2}$", r"$\sigma_{m^4}$"]
     	
 	for L, beta_min, beta_max in ROUTINE_PARAMETERS:
 		# ax[i].text(0.5, 0.9, f"L = {int(L)}", transform=ax[i].transAxes, fontsize=12, horizontalalignment='center')
@@ -108,10 +108,10 @@ def plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
 				ax[i].legend(loc="upper right")
 			
-			plt.savefig(repo.working_tree_dir + f"/processing/data/std-dev-analysis/blocking_std_dev_plot_beta={beta}.pdf")
+			plt.savefig(repo.working_tree_dir + f"/processing/std-dev-analysis/blocking_std_dev_plot_beta={beta}.pdf")
 			plt.close()
 	
-	print("Done! Check the plots at " + repo.working_tree_dir + f"/processing/data/std-dev-analysis/" + "\n")
+	print("Done! Check the plots at " + repo.working_tree_dir + f"/processing/std-dev-analysis/" + "\n")
 	return None
 	
 def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
@@ -127,7 +127,9 @@ def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 	# Import sampling parameters
 	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
 	block_optimal_length = SAMPLING_PARAMETERS["block_optimal_length"]
-	Path(repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}").mkdir(exist_ok=True)
+	Path(repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}").mkdir(exist_ok=True)
+	
+	print(f"Blocking data using optimal block length: {block_optimal_length}")
 
 	# Run the blocking algorithm in Julia for each set of data and block length.
 	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
@@ -136,18 +138,18 @@ def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 		for beta in np.linspace(beta_min, beta_max, number_of_beta):
 		
 			input_data_filepath = repo.working_tree_dir + f"/simulations/data/L={L}/beta={beta}.txt"										# Use raw data
-			output_data_filepath = repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}/L={L}/beta={beta}.txt" 	# Path to file where data computed by blocking.jl will be stored
+			output_data_filepath = repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}/L={L}/beta={beta}.txt" 	# Path to file where data computed by blocking.jl will be stored
 			
-			Path(repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}/L={L}").mkdir(exist_ok=True)
+			Path(repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}/L={L}").mkdir(exist_ok=True)
 			with open(output_data_filepath, "w") as output_data_file:
 				# Write the header line to the file with the current date and time
-				output_data_file.write(f"# e, m, m2, m4 [calculated {datetime.now()}]\n")
+				output_data_file.write(f"# e, |m|, m2, m4 [calculated {datetime.now()}]\n")
 				
 			julia_script_filepath = repo.working_tree_dir + "/processing/src/blocking.jl"			# Run julia script
 			shell_command = "julia " + julia_script_filepath + f" {L} {beta} {block_optimal_length} " + input_data_filepath + " " + output_data_filepath + " --use-optimal"
 			os.system(f"{shell_command}")
 	
-	print("Done! Check the files at " + repo.working_tree_dir + f"/analysis/data_blocklength={block_optimal_length}/" + "\n")
+	print("Done! Check the files at " + repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}/")
 	return None
 
 # ------------------------------------------------------------------------------
@@ -157,13 +159,12 @@ def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 if __name__ == "__main__":
 
 	# Read user mode
-	error_message = "Error: no option specified \n\
+	error_message = "No option specified \n\
 Use --use-optimal as a call option to use the previously computed optimal block length \n\
 Use --try as a call option to try different block lengths \n\
 Use --plot as a call option to plot previously calculated standard deviations of observables \n\
 Use --try-plot as a call option to try different block lengths and plot standard deviations of observables \n\
-\n\
-To change the used optimal block length, or to set trial lengths, modify their values in \"Ising2D/setup/setup.py\".\n"
+In order to change the used optimal block length, or to set trial lengths, modify their values in \"Ising2D/setup/setup.py\"."
 
 	if len(sys.argv) != 2:
 		raise ValueError(error_message)

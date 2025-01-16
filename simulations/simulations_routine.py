@@ -6,6 +6,7 @@
 
 import numpy as np
 import os
+from datetime import datetime
 from pathlib import Path 		# Manage file paths
 
 # Get repo root
@@ -36,8 +37,15 @@ def run_simulations(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 		
 			julia_script_filepath = repo.working_tree_dir + "/simulations/src/ising2D_cluster.jl"
 			output_data_filepath = repo.working_tree_dir + f"/simulations/data/L={L}/beta={beta}.txt"
+			with open(output_data_filepath, "w") as output_data_file:
+				# Write the header line to the file with the current date and time
+				output_data_file.write(f"# e, |m|, m2, m4 [calculated {datetime.now()}]\n")
+			
 			shell_command = "julia " + julia_script_filepath + f" {beta} {L} {therm_N} {N} " + output_data_filepath	
 			os.system(f"{shell_command}")
+			
+	print("Done! Check the files at " + repo.working_tree_dir + f"/simulations/data/")
+	return None
 
 # ------------------------------------------------------------------------------
 # PART 3: Run simulations
@@ -45,9 +53,9 @@ def run_simulations(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
 if __name__ == "__main__":
 	
-	error_message = "Error: no option specified \n\
+	error_message = "No option specified \n\
 Use --compute-ranges as a call option to compute from scratch simulations ranges \n\
-Use --read-ranges as a call option not to read from file simulations ranges \n"
+Use --read-ranges as a call option not to read from file simulations ranges"
 
 	if len(sys.argv) != 2:
 		raise ValueError(error_message)
@@ -61,7 +69,11 @@ Use --read-ranges as a call option not to read from file simulations ranges \n"
 			to compute the variables ROUTINE_PARAMETERS.
 			'''
 
+			print("Computing ranges...\n")
 			from routine_parameters import ROUTINE_PARAMETERS
+			
+			routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters.txt"
+			print("Done! Ranges were stored at " + routine_parameters_filepath + "\n")
 
 		elif compute_ranges == "--read-ranges":
 
@@ -70,6 +82,7 @@ Use --read-ranges as a call option not to read from file simulations ranges \n"
 			routine_parameters.txt where the already calculated ranges are stored.
 			'''
 			
+			print("Reading ranges...\n")
 			routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters.txt"
 			_, left, right = np.loadtxt(routine_parameters_filepath, delimiter=',', unpack=True)
 			ROUTINE_PARAMETERS = []
@@ -82,6 +95,7 @@ Use --read-ranges as a call option not to read from file simulations ranges \n"
 			raise ValueError(error_message)
 		
 		# Comment here for debugging
+		print("Running simulations...\n")
 		run_simulations(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
 		
 		# Uncomment here for debugging
