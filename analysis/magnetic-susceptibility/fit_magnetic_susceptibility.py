@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 # plt.style.use("science")
 
-from setup import SIZES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS
+from setup import TOPOLOGY, SIZES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS
 from generate_fit_ranges import generate_fit_ranges
 	
 # Import plot function for plottind data along with fits
@@ -34,13 +34,14 @@ from generate_fit_ranges import generate_fit_ranges
 def quadratic_fit_function(x, a, b, c):
 	return a * (x - b)**2 + c
     
-def quadratic_fit_chi(L, fit_range):
+def quadratic_fit_chi(TOPOLOGY, L, fit_range):
 
 	'''
 	Quadratic fit for the magnetic susceptibility, near the maximum. 
 	The point of maximum is by definition beta_pc(L), pseudocritical.
 	Beta and L are considered exact parameters.
 	Input:
+		TOPOLOGY: square, triangular or hexagonal?
 		L: lattice size
 		fit_range: for given size, the selected fit range
 	Output:
@@ -48,7 +49,7 @@ def quadratic_fit_chi(L, fit_range):
 	'''
     
 	# Load data
-	input_data_filepath = repo.working_tree_dir + f"/analysis/data/L={L}.txt"
+	input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
 	beta, _, _, chi, e_chi = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
 	
 	# Restrict data
@@ -64,10 +65,10 @@ def quadratic_fit_chi(L, fit_range):
 		
 	simulation_to_fit_efficiency = (processed_points-deleted_points)/processed_points
 	if simulation_to_fit_efficiency < 0.25:
-		print(f"Hey! You are discarding a lot of data here! [L={L}, efficiency={simulation_to_fit_efficiency:.2f}]")
+		print(f"\nHey! You are discarding a lot of data here! [{TOPOLOGY} lattice, L={L}, efficiency={simulation_to_fit_efficiency:.2f}]\n")
     
 	# Import theoretically estimated parameters to initialize p0
-	theoretical_critical_parameters_filepath = repo.working_tree_dir + "/setup/theoretical_estimations.txt"
+	theoretical_critical_parameters_filepath = repo.working_tree_dir + "/setup/theoretical_estimations_" + TOPOLOGY + ".txt"
 	sizes, tmp_beta_pc, tmp_chi_max = np.loadtxt(theoretical_critical_parameters_filepath, delimiter=',', unpack=True)
 	
 	not_found = True
@@ -79,7 +80,7 @@ def quadratic_fit_chi(L, fit_range):
 	
 	if not_found:
 		AssertionError(f"Seems like the chosen size L={L} was not simulated in the first place.\n\
-Please run at least one simulation and the subsequent processing procedure to perform this fit!\n")
+Please run at least one simulation and the processing procedure to perform this fit!\n")
 		sys.exit()
     
 	# Fit (-1 arbitrarily set due to negative concavity)
@@ -101,11 +102,12 @@ def power_law_fit_function(x, a, b, c):
 	
 	return a + b * np.power(x, c)
 
-def pseudocritical_beta_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS):
+def pseudocritical_beta_fit(TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS):
     
 	'''
 	Fit the pseudocritical beta as a function of L.
 	Input:
+		TOPOLOGY: square, triangular or hexagonal?
 		SIZES: to check if all available data are being fitted
 		THEORETICAL_CRITICAL_PARAMETERS: to import fit initializers
 	Output:
@@ -113,19 +115,19 @@ def pseudocritical_beta_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS):
 	'''
 
 	# Load data
-	input_data_filepath = repo.working_tree_dir + "/analysis/magnetic-susceptibility/quadratic_fit_results.txt"
+	input_data_filepath = repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/quadratic_fit_results.txt"
 	L, beta_pc, e_beta_pc, _, _, _ = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
 	
 	if len(L) < len(SIZES):
 	
 		# TODO Improve to L != SIZES
-		print(f"Warning: I have detected you are trying to run a fit over {len(L)+1} data points, while you have set a longer array SIZES in \"Ising2D/setup/setup.py\". You may be fitting over an undernumbered array of points. Consider running the quadratic fit over the remaining lengths in order to increment the fit quality.")
+		print(f"\nWarning: I have detected you are trying to run a fit over {len(L)+1} data points, while you have set a longer array SIZES in \"Ising2D/setup/setup.py\". You may be fitting over an undernumbered array of points. Consider running the quadratic fit over the remaining lengths in order to increment the fit quality.")
 		user_proceed = input("Shall I proceed?  (y/n) ")
 		
 		if user_proceed == "n":
 			sys.exit()
 		elif user_proceed == "y":
-			print("Fitting undernumbered data...")
+			print("Fitting undernumbered data...\n")
 		else:
 			raise ValueError("Invalid input. Please enter y (yes) or n (no).")
 
@@ -153,11 +155,12 @@ def pseudocritical_beta_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS):
 	
 	return beta_c, e_beta_c, nu, e_nu, chi2ndof
 	
-def chi_max_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS):
+def chi_max_fit(TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS):
     
 	'''
 	Fit the susceptibility maxima as a function of L.
 	Input:
+		TOPOLOGY: square, triangular or hexagonal?
 		SIZES: to check if all available data are being fitted
 		THEORETICAL_CRITICAL_PARAMETERS: to import fit initializers
 	Output:
@@ -165,13 +168,13 @@ def chi_max_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS):
 	'''
 
 	# Load data
-	input_data_filepath = repo.working_tree_dir + "/analysis/magnetic-susceptibility/results/quadratic_fit_results.txt"
+	input_data_filepath = repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/quadratic_fit_results.txt"
 	L, _, _, chi_max, e_chi_max, _ = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
 	
 	if len(L) < len(SIZES):
 	
 		# TODO Improve to L != SIZES
-		print(f"Warning: I have detected you are trying to run a fit over {len(L)+1} data points, while you have set a longer array SIZES in \"Ising2D/setup/setup.py\". You may be fitting over an undernumbered array of points. Consider running the quadratic fit over the remaining lengths in order to increment the fit quality.")
+		print(f"\nWarning: I have detected you are trying to run a fit over {len(L)+1} data points, while you have set a longer array SIZES in \"Ising2D/setup/setup.py\". You may be fitting over an undernumbered array of points. Consider running the quadratic fit over the remaining lengths in order to increment the fit quality.")
 		user_proceed = input("Shall I proceed?  (y/n) ")
 		
 		if user_proceed == "n":
@@ -231,7 +234,7 @@ To change the used fit ranges modify [...] END"
 			
 			# Comment the next block if you want to manually import fit_range 
 			# using customized ranges rather than the generated ones
-			FIT_RANGES = generate_fit_ranges(SIZES, MAX_FIT_DEVIATION)
+			FIT_RANGES = generate_fit_ranges(TOPOLOGY, SIZES, MAX_FIT_DEVIATION)
 			fit_range = FIT_RANGES[f"{L}"]
 			
 			# Uncomment the next block if you want to manually import fit_range
@@ -243,7 +246,7 @@ To change the used fit ranges modify [...] END"
 			fit_range = (float(left[i]), float(right[i]))
 			'''
 			
-			beta_pc, e_beta_pc, chi_max, e_chi_max, chi2ndof = quadratic_fit_chi(L, fit_range)
+			beta_pc, e_beta_pc, chi_max, e_chi_max, chi2ndof = quadratic_fit_chi(TOPOLOGY, L, fit_range)
 			print(f"Quadratic fit near maximum completed.\n\
 Fitted parameters [L={L}, fit range={fit_range}]:\n\
 beta_pc = {beta_pc} +/- {e_beta_pc}\n\
@@ -253,7 +256,7 @@ chi^2/ndof = {chi2ndof}")
 		elif user_mode == "--fit-beta_pc":
 		
 			print(f"Pseudocritical temperature power-law fitting...")
-			beta_c, e_beta_c, nu, e_nu, chi2ndof = pseudocritical_beta_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS)
+			beta_c, e_beta_c, nu, e_nu, chi2ndof = pseudocritical_beta_fit(TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS)
 			print(f"Pseudocritical temperature power-law fit completed.\n\
 Fitted parameters:\n\
 beta_c = {beta_c} +/- {e_beta_c}\n\
@@ -263,7 +266,7 @@ chi^2/ndof = {chi2ndof}")
 		elif user_mode == "--fit-chi_max":
 		
 			print(f"Magnetization susceptibility maxima power-law fitting...")
-			exponent, e_exponent, chi2ndof = chi_max_fit(SIZES, THEORETICAL_CRITICAL_PARAMETERS)
+			exponent, e_exponent, chi2ndof = chi_max_fit(TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS)
 			print(f"Magnetization susceptibility maxima fit completed.\n\
 Fitted parameter:\n\
 gamma/nu = {exponent} +/- {e_exponent}\n\

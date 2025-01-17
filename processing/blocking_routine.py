@@ -15,10 +15,10 @@ repo = git.Repo('.', search_parent_directories=True)
 # Import parameters
 import sys
 sys.path.append(repo.working_tree_dir + "/setup/")
-from setup import SIZES, SAMPLING_PARAMETERS
+from setup import TOPOLOGY, SIZES, SAMPLING_PARAMETERS
 
 # Read which simulations have been performed
-routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters.txt"
+routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters_" + TOPOLOGY + ".txt"
 _, left, right = np.loadtxt(routine_parameters_filepath, delimiter=',', unpack=True)
 ROUTINE_PARAMETERS = []
 
@@ -34,7 +34,7 @@ from datetime import datetime
 # PART 2: Define functions for blocking
 # ------------------------------------------------------------------------------
 
-def try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
+def try_blocking_lengths(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
 	'''
 	try_blocking_lengths runs the julia blocking.jl script over each blocking
@@ -44,6 +44,8 @@ def try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 	where for each L, beta and block length k standard deviations of different
 	observables are saved.
 	'''
+	
+	print(f"\nTrying different blocking schemes on the {TOPOLOGY} lattice\n")
 
 	# Import samping parameters
 	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
@@ -54,12 +56,12 @@ def try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 		
 	block_trial_lengths = "\"" + string[:-1] + "\""
 	
-	output_data_filepath = repo.working_tree_dir + "/processing/std-dev-analysis/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
-	Path(repo.working_tree_dir + "/processing/std-dev-analysis/").mkdir(exist_ok=True)
+	output_data_filepath = repo.working_tree_dir + f"/processing/std-dev-analysis/{TOPOLOGY}/blocking_std_dev.txt" # file where data computed by blocking.jl will be stored
+	Path(repo.working_tree_dir + f"/processing/std-dev-analysis/{TOPOLOGY}").mkdir(exist_ok=True)
 	
 	with open(output_data_filepath, "w") as output_data_file:
 		# Write the header line to the file with the current date and time
-		output_data_file.write(f"# L, beta, k, sigma_e, sigma_|m|, sigma_m2, sigma_m4 [calculated {datetime.now()}]\n")
+		output_data_file.write(f"# L, beta, k, sigma_e, sigma_|m|, sigma_m2, sigma_m4 [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
 
 	# Run the blocking algorithm in Julia for each set of data and block length.
 	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
@@ -69,52 +71,66 @@ def try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 		
 		for beta in np.linspace(beta_min, beta_max, number_of_beta):
 		
-			input_data_filepath = repo.working_tree_dir + f"/simulations/data/L={L}/beta={beta}.txt"	# Use raw data
+			input_data_filepath = repo.working_tree_dir + f"/simulations/data/{TOPOLOGY}/L={L}/beta={beta}.txt"	# Use raw data
 			shell_command = "julia " + julia_script_filepath + f" {L} {beta} {block_trial_lengths} " + input_data_filepath + " " + output_data_filepath + " --try"
 			os.system(f"{shell_command}")
 			
 	print("Done! Check the file at " + output_data_filepath + "\n")
 	return None
 	
-def plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
+def plot_std_dev(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
 	'''
 	plot_std_dev plots the data calculated by try_blocking_lengths by directly
 	reading the saved file.
 	'''
 	
+	print("\n UNDER CONSTRUCTION... \n") # TODO Remove
+	
 	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
-	std_dev_filepath = repo.working_tree_dir + "/processing/std-dev-analysis/blocking_std_dev.txt"
+	std_dev_filepath = repo.working_tree_dir + f"/processing/std-dev-analysis/{TOPOLOGY}/blocking_std_dev.txt"
 	sizes, betas, lengths, sigma_e, sigma_m, sigma_m2, sigma_m4 = np.loadtxt(std_dev_filepath, delimiter=',', unpack=True)
 	
 	sigma = [sigma_e, sigma_m, sigma_m2, sigma_m4]
 	observables_names = [r"$\sigma_e$", r"$\sigma_{|m|}$", r"$\sigma_{m^2}$", r"$\sigma_{m^4}$"]
-    	
-	for L, beta_min, beta_max in ROUTINE_PARAMETERS:
-		# ax[i].text(0.5, 0.9, f"L = {int(L)}", transform=ax[i].transAxes, fontsize=12, horizontalalignment='center')
 	
-		for beta in np.linspace(beta_min, beta_max, number_of_beta):
+	
+	# BIG FAT PROBLEM: betas do not coincide, simulatenous plot impossible
+	# TODO Solve here. Force pseudocritical data plot?
+	
+	'''
+	number_of_plots = 5
+	slicing_step = int(np.floor(number_of_beta/number_of_plots))
+	full_beta_array = np.linspace(beta_min, beta_max, number_of_beta)
+	reduced_beta_array = full_beta_array[0::slicing_step]
+	'''
+	
+	for beta in beta_array:
+		
+		fig, ax = plt.subplots(len(sigma), 1, figsize=(8, 4*len(sigma)), sharex=True)
+		
+		for L in SIZES:
+		
 			indices = (sizes == L) & (betas == beta)
-			
-			fig, ax = plt.subplots(len(sigma), 1, figsize=(8, 4*len(sigma)), sharex=True)
-			
+			ax[i].text(0.5, 0.9, f"L = {int(L)}", transform=ax[i].transAxes, fontsize=12, horizontalalignment='center')
+		
 			for i in range(len(sigma)):
 
 				std_dev = sigma[i]
 				ax[i].set_ylabel(r"Standard deviation " + observables_names[i])
-	
+
 				plotted_point = ax[i].plot(lengths[indices], std_dev[indices], ".", label=fr"$\beta$ = {beta:.3f}")	# Points
 				ax[i].plot(lengths[indices], std_dev[indices], "-",alpha=0.5, color=plotted_point[0].get_color()) 	# Lines connecting the points
-
+				ax[i].set_title(f"std:dev from {TOPOLOGY} lattice")
 				ax[i].legend(loc="upper right")
-			
-			plt.savefig(repo.working_tree_dir + f"/processing/std-dev-analysis/blocking_std_dev_plot_beta={beta}.pdf")
-			plt.close()
+		
+		plt.savefig(repo.working_tree_dir + f"/processing/std-dev-analysis/{TOPOLOGY}/blocking_std_dev_plot_beta={beta}.pdf")
+		plt.close()
 	
-	print("Done! Check the plots at " + repo.working_tree_dir + f"/processing/std-dev-analysis/" + "\n")
+	print("Done! Check the plots at " + repo.working_tree_dir + f"/processing/std-dev-analysis/{TOPOLOGY}/\n")
 	return None
 	
-def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
+def block_data(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 
 	'''
 	blocking_data runs the julia blocking.jl script just once for the optimal 
@@ -127,9 +143,9 @@ def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 	# Import sampling parameters
 	number_of_beta = SAMPLING_PARAMETERS["number_of_beta"]
 	block_optimal_length = SAMPLING_PARAMETERS["block_optimal_length"]
-	Path(repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}").mkdir(exist_ok=True)
+	Path(repo.working_tree_dir + f"/processing/data/{TOPOLOGY}/blocklength={block_optimal_length}").mkdir(exist_ok=True)
 	
-	print(f"Blocking data using optimal block length: {block_optimal_length}")
+	print(f"\nBlocking data from the {TOPOLOGY} lattice using optimal block length: {block_optimal_length}\n")
 
 	# Run the blocking algorithm in Julia for each set of data and block length.
 	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
@@ -137,19 +153,19 @@ def block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 		
 		for beta in np.linspace(beta_min, beta_max, number_of_beta):
 		
-			input_data_filepath = repo.working_tree_dir + f"/simulations/data/L={L}/beta={beta}.txt"										# Use raw data
-			output_data_filepath = repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}/L={L}/beta={beta}.txt" 	# Path to file where data computed by blocking.jl will be stored
+			input_data_filepath = repo.working_tree_dir + f"/simulations/data/{TOPOLOGY}/L={L}/beta={beta}.txt"										# Use raw data
+			output_data_filepath = repo.working_tree_dir + f"/processing/data/{TOPOLOGY}/blocklength={block_optimal_length}/L={L}/beta={beta}.txt" 	# Path to file where data computed by blocking.jl will be stored
 			
-			Path(repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}/L={L}").mkdir(exist_ok=True)
+			Path(repo.working_tree_dir + f"/processing/data/{TOPOLOGY}/blocklength={block_optimal_length}/L={L}").mkdir(exist_ok=True)
 			with open(output_data_filepath, "w") as output_data_file:
 				# Write the header line to the file with the current date and time
-				output_data_file.write(f"# e, |m|, m2, m4 [calculated {datetime.now()}]\n")
+				output_data_file.write(f"# e, |m|, m2, m4 [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
 				
 			julia_script_filepath = repo.working_tree_dir + "/processing/src/blocking.jl"			# Run julia script
 			shell_command = "julia " + julia_script_filepath + f" {L} {beta} {block_optimal_length} " + input_data_filepath + " " + output_data_filepath + " --use-optimal"
 			os.system(f"{shell_command}")
 	
-	print("Done! Check the files at " + repo.working_tree_dir + f"/processing/data-blocklength={block_optimal_length}/")
+	print("Done! Check the files at " + repo.working_tree_dir + f"/processing/data/{TOPOLOGY}/blocklength={block_optimal_length}/\n")
 	return None
 
 # ------------------------------------------------------------------------------
@@ -173,7 +189,7 @@ In order to change the used optimal block length, or to set trial lengths, modif
 		if user_mode == "--try":
 			
 			# Comment here for debugging
-			try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			try_blocking_lengths(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
 			
 			# Uncomment here for debugging
 			# print(ROUTINE_PARAMETERS)
@@ -181,7 +197,7 @@ In order to change the used optimal block length, or to set trial lengths, modif
 		elif user_mode == "--plot":
 			
 			# Comment here for debugging
-			plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			plot_std_dev(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
 			
 			# Uncomment here for debugging
 			# print(ROUTINE_PARAMETERS)
@@ -189,8 +205,8 @@ In order to change the used optimal block length, or to set trial lengths, modif
 		elif user_mode == "--try-plot":
 			
 			# Comment here for debugging
-			try_blocking_lengths(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
-			plot_std_dev(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			try_blocking_lengths(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			plot_std_dev(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
 			
 			# Uncomment here for debugging
 			# print(ROUTINE_PARAMETERS)
@@ -198,7 +214,8 @@ In order to change the used optimal block length, or to set trial lengths, modif
 		elif user_mode == "--use-optimal":
 
 			# Comment here for debugging
-			block_data(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+			Path(repo.working_tree_dir + f"/processing/data/{TOPOLOGY}/").mkdir(exist_ok=True)
+			block_data(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
 			
 			# Uncomment here for debugging
 			# print(ROUTINE_PARAMETERS)

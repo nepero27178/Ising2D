@@ -26,32 +26,33 @@ cwd = os.getcwd()
 repo = git.Repo('.', search_parent_directories=True)
 
 # Import parameters
-from setup import SIZES, THEORETICAL_CRITICAL_PARAMETERS
+from setup import TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS
 
 # Functions
 
-def get_theoretical_values(THEORETICAL_CRITICAL_PARAMETERS,SIZES):
+def get_theoretical_values(TOPOLOGY, THEORETICAL_CRITICAL_PARAMETERS, SIZES):
+
 	'''
 	Expected maxima of the magnetic susceptibility are stored inside the file
 	theoretical_estimations.txt, and calculated via the finite size scaling
 	relations of tht model.
 	'''
 
-	filepath = repo.working_tree_dir + "/setup/theoretical_estimations.txt"
+	theoretical_estimations_filepath = repo.working_tree_dir + "/setup/theoretical_estimations_" + TOPOLOGY + ".txt"
 
 	# Re-initialize file
-	with open(filepath,"w") as file:
-	    file.write("# L, beta_pc, chi_max [calculated {datetime.now()}]\n")
+	with open(theoretical_estimations_filepath,"w") as theoretical_estimations_file:
+	    theoretical_estimations_file.write(f"# L, beta_pc, chi_max [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
 	
 	# Physical parameters
-	beta_c = THEORETICAL_CRITICAL_PARAMETERS['beta_c']
-	nu = THEORETICAL_CRITICAL_PARAMETERS['nu']
-	gamma = THEORETICAL_CRITICAL_PARAMETERS['gamma']
+	beta_c = THEORETICAL_CRITICAL_PARAMETERS["beta_c"]
+	nu = THEORETICAL_CRITICAL_PARAMETERS["nu"]
+	gamma = THEORETICAL_CRITICAL_PARAMETERS["gamma"]
 
 	# Numerical parameters
-	x_0 = THEORETICAL_CRITICAL_PARAMETERS['x_0'] 
-	y_0 = THEORETICAL_CRITICAL_PARAMETERS['y_0']
-	c_0 = THEORETICAL_CRITICAL_PARAMETERS['c_0']
+	x_0 = THEORETICAL_CRITICAL_PARAMETERS["x_0"] 
+	y_0 = THEORETICAL_CRITICAL_PARAMETERS["y_0"]
+	c_0 = THEORETICAL_CRITICAL_PARAMETERS["c_0"]
 
 	# Initialize theoretical values
 	theoretical_values = np.zeros([len(SIZES),3])
@@ -63,8 +64,8 @@ def get_theoretical_values(THEORETICAL_CRITICAL_PARAMETERS,SIZES):
 		theoretical_values[i,2] = c_0 + y_0 * L**(gamma/nu)
 
 		# Write on file
-		with open(filepath,"a") as file:
-		    file.write(f"{L}, {theoretical_values[i,1]}, {theoretical_values[i,2]}\n")
+		with open(theoretical_estimations_filepath,"a") as theoretical_estimations_file:
+		    theoretical_estimations_file.write(f"{L}, {theoretical_values[i,1]}, {theoretical_values[i,2]}\n")
 
 		'''
 		# Print on terminal
@@ -75,13 +76,14 @@ def get_theoretical_values(THEORETICAL_CRITICAL_PARAMETERS,SIZES):
 		
 	return theoretical_values
 	
-def plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS):
+def plot_theoretical_values(TOPOLOGY, theoretical_values, THEORETICAL_CRITICAL_PARAMETERS, ROUTINE_PARAMETERS):
 	'''
 	Plot the values calculated via get_theoretical_values; together, are also
 	plotted the simulations ranges stored in the imported variable 
 	ROUTINE_PARAMETERS.
 	'''
 	
+	beta_c = THEORETICAL_CRITICAL_PARAMETERS["beta_c"]
 	beta_pc = theoretical_values[:,1]
 	chi_max = theoretical_values[:,2]
 
@@ -105,26 +107,25 @@ def plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS):
 		# Plot chi_max vs beta_pc
 		ax.plot(beta_pc[i], chi_max[i],'.',label=fr"$L$ = {L}",color=(r,1-r,r))
 	
-	ax.plot(np.log(3)/4 * np.ones(len(chi_max)),
+	ax.plot(beta_c * np.ones(len(chi_max)),
 			np.linspace(0,np.max(chi_max),len(chi_max)),
 			color="gray",alpha=0.5,
 			linewidth=0.75)
 	
 	# General styling
-	ax.set_xticks(ticks=[0.266, 0.270, 0.274, np.log(3)/4, 0.278],
-				  labels=["0.266", "0.270", "0.274", r"$\beta_c$", "0.278"])
-	ax.set_title("Theoretical values")
+	ax.set_xticks(list(ax.get_xticks()) + [beta_c])				# TODO Set correct xlabel
+	ax.set_title("Theoretical values for topology: " + TOPOLOGY)
 	ax.legend(loc="upper left")
 	ax.set_xlabel(r"$\beta$")
 	ax.set_ylabel(r"Magnetic susceptibility maximum $\chi_\max'$")
 
 	# Save plot
-	plt.savefig(repo.working_tree_dir + "/setup/routine_ranges_and_theoretical_maxima.pdf")
+	plt.savefig(repo.working_tree_dir + "/setup/routine_ranges_and_theoretical_maxima_" + TOPOLOGY + ".pdf")
 
 	return None
 
 if __name__ == "__main__":
-	theoretical_values = get_theoretical_values(THEORETICAL_CRITICAL_PARAMETERS,SIZES)
+	theoretical_values = get_theoretical_values(TOPOLOGY, THEORETICAL_CRITICAL_PARAMETERS, SIZES)
 	
 	error_message = "Error: no option specified \n\
 Use --plot-ranges as a call option to plot simulations ranges \n\
@@ -134,10 +135,15 @@ Use --hide-ranges as a call option not to plot simulations ranges \n"
 	else:
 		use_ranges = sys.argv[1]
 		if use_ranges == "--plot-ranges":
+			
 			from routine_parameters import ROUTINE_PARAMETERS
-			plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS)
+			plot_theoretical_values(TOPOLOGY, theoretical_values, THEORETICAL_CRITICAL_PARAMETERS, ROUTINE_PARAMETERS)
+			
 		elif use_ranges == "--hide-ranges":
+			
 			ROUTINE_PARAMETERS = False
-			plot_theoretical_values(theoretical_values,ROUTINE_PARAMETERS)
+			plot_theoretical_values(TOPOLOGY, theoretical_values, THEORETICAL_CRITICAL_PARAMETERS, ROUTINE_PARAMETERS)
+			
 		else:
+			
 			raise ValueError(error_message)

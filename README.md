@@ -16,11 +16,11 @@ rhomboidal with periodic boundary conditions, thus the lattice is encoded into a
 $L \times L$ square matrix with enhanced connectivity. All details about the
 model are explained inside our relation, `Ising2D-Triangular.pdf`.
 
-This project consists of three parts in sequence: **simulation**, **processing**
-and **analysis** - each of which is assigned a folder, inside of which you may
-find some Python routine files used to control all the numerical machinery. In 
-each you can also find a `/src/` folder and a `/data/` folder, respectively for
-Julia scripts and data storage.
+This project consists of four parts in sequence: **setup**, **simulation**, 
+**processing** and **analysis** - each of which is assigned a folder, inside of
+which you may find some Python routine files used to control all the numerical
+machinery. In each you can also find a `/src/` folder and a `/data/` folder, 
+respectively for Julia scripts and data storage.
 
 1. In the **simulation** part we've simulated sampling the system using a 
 Markov Chain-Monte Carlo approach through the Metropolis-Hastings algorithm, in

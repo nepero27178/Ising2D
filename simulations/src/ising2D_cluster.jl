@@ -6,36 +6,38 @@ include("./functions.jl")
 
 # Setup
 
-if length(ARGS) != 5
+if length(ARGS) != 6
     println("How to use this program?
-Type the following: \$ julia ./ising2D_metro.jl arg1 arg2 arg3 arg4 arg5
+Type the following: \$ julia ./ising2D_metro.jl arg1 arg2 arg3 arg4 arg5 arg6
 Where:
-· arg1 = beta (float)
-· arg2 = number of spins per side in your square lattice (int)
-· arg3 = number of samples to be stashed due to thermalization (int)
-· arg4 = number of Monte Carlo samples (int)
-· arg5 = path to file where to save data (string)")
+· arg1 = topology (string, choose: \"square\" / \"triangular\" / \"hexagonal\"
+· arg2 = beta (float)
+· arg3 = number of spins per side in your square lattice (int)
+· arg4 = number of samples to be stashed due to thermalization (int)
+· arg5 = number of Monte Carlo samples (int)
+· arg6 = path to file where to save data (string)")
     exit()
 else
     UserInput = ARGS
-    Beta = parse(Float64,UserInput[1])            # Temperature        
-    L = parse(Int64,UserInput[2])                 # Size
-    ThermN = parse(Int64,UserInput[3])            # Thermalization
-    N = parse(Int64,UserInput[4])                 # Monte Carlo
-    FilePath = UserInput[5]                       # Data file
+    Topology = UserInput[1]						  # Lattice topology
+    Beta = parse(Float64,UserInput[2])            # Temperature        
+    L = parse(Int64,UserInput[3])                 # Size
+    ThermN = parse(Int64,UserInput[4])            # Thermalization
+    N = parse(Int64,UserInput[5])                 # Monte Carlo
+    FilePath = UserInput[6]                       # Data file
 end
 
 # Simulation
 
 function main()
-    @info "Working on L=$L, β=$Beta, N=$N"
+    @info "Working on a $Topology lattice with L=$L, β=$Beta, N=$N"
     @time begin
         # Set up lattice
         LatticeConfiguration = SetLattice(L)
-        ExpansionProbability = 1 - exp(-2*Beta)
-        AllNeighbours = PrecalculateNeighboursTriangle(L)
+        ExpansionProbability = 1 - exp(-2*Beta)					# Cluster expansion probability
+        AllNeighbours = PreCalculateNeighbours(Topology, L)		# Speedup
         
-        Energy = GetEnergy(L, LatticeConfiguration)
+        Energy = GetEnergy(Topology, L, LatticeConfiguration)
         @info "Initial energy = $Energy"
         Magnetization = GetMagnetization(L, LatticeConfiguration)
         @info "Initial magnetization = $Magnetization"
@@ -60,7 +62,7 @@ function main()
             
             # Calculate and store:
             # Energy and magnetization
-            Energy = GetEnergy(L, LatticeConfiguration)
+            Energy = GetEnergy(Topology, L, LatticeConfiguration)
             Magnetization = GetMagnetization(L, LatticeConfiguration)
             
             # |Magnetization|, Magnetization^2, Magnetization^4
