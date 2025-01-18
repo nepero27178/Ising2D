@@ -22,7 +22,7 @@ from setup import TOPOLOGY, SAMPLING_PARAMETERS
 # PART 2: Define functions for simulations
 # ------------------------------------------------------------------------------
 
-def run_simulations(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
+def run_simulations(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 	
 	Path(repo.working_tree_dir + f"/simulations/data/{TOPOLOGY}/").mkdir(exist_ok=True) # exist_ok prevents errors if the folder
 	
@@ -100,7 +100,7 @@ Use --read-ranges as a call option not to read from file simulations ranges"
 		
 		# Comment here for debugging
 		print("Running simulations...\n")
-		run_simulations(ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
+		run_simulations(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS)
 		
 		# Uncomment here for debugging
 		# print(ROUTINE_PARAMETERS)

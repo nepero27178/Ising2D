@@ -43,10 +43,10 @@ function PreCalculateNeighbours(Topology::String, L::Int64)::Array{Vector{Tuple{
     	AllNeighbours = PreCalculateNeighboursSquare(L)
     	
     elseif Topology=="triangular"
-    	AllNeighbours = PreCalculateNeighboursSquare(L)
+    	AllNeighbours = PreCalculateNeighboursTriangular(L)
     	
     elseif Topology=="hexagonal"
-    	AllNeighbours = PreCalculateNeighboursTriangular(L)
+    	AllNeighbours = PreCalculateNeighboursHexagonal(L)
     
     else
     	throw(DomainError(Topology, "\nPlease choose one of the following possible topologies: \"square\", \"triangular\", \"hexagonal\".\n"))
@@ -94,8 +94,9 @@ end
 function PreCalculateNeighboursSquare(L::Int64)::Array{Vector{Tuple{Int64, Int64}}}
 
     """
-    Pre-calculate the neighbors for all sites in the triangular lattice.
-    Returns a 2D array where each element contains a list of neighboring sites for that lattice site.
+    Pre-calculate the neighbors for all sites in the square lattice.
+    Returns a 2D array where each element contains a list of neighboring sites 
+    for that lattice site.
     """
     
     # Create an empty 2D array where each site has an array of neighbors
@@ -122,7 +123,6 @@ function GetStepAcceptabilitiesSquare(Beta::Float64)::Array{Float64}
     remaining ones.
     """
 	
-	
     PossibleEnergies = [2 4]
     StepAcceptabilities = exp.(-2 * Beta * PossibleEnergies)
     return StepAcceptabilities
@@ -131,7 +131,7 @@ end
 
 # Triangular lattice -----------------------------------------------------------
 
-function GetNeighboursTriangle(L::Int64, Site::Tuple{Int64, Int64})
+function GetNeighboursTriangular(L::Int64, Site::Tuple{Int64, Int64})
 
     """
     Get the indexes of the neighbouring sites to a given site,
@@ -152,11 +152,12 @@ function GetNeighboursTriangle(L::Int64, Site::Tuple{Int64, Int64})
     return Neighbours
 end
 
-function PreCalculateNeighboursTriangle(L::Int64)::Array{Vector{Tuple{Int64, Int64}}}
+function PreCalculateNeighboursTriangular(L::Int64)::Array{Vector{Tuple{Int64, Int64}}}
 
     """
     Pre-calculate the neighbors for all sites in the triangular lattice.
-    Returns a 2D array where each element contains a list of neighboring sites for that lattice site.
+    Returns a 2D array where each element contains a list of neighboring sites
+    for that lattice site.
     """
     
     # Create an empty 2D array where each site has an array of neighbors
@@ -165,7 +166,7 @@ function PreCalculateNeighboursTriangle(L::Int64)::Array{Vector{Tuple{Int64, Int
     # Populate the array 
     for i in 1:L
         for j in 1:L
-            AllNeighbours[i, j] = GetNeighboursTriangle(L, (i,j))
+            AllNeighbours[i, j] = GetNeighboursTriangular(L, (i,j))
         end
     end
     
@@ -185,10 +186,9 @@ end
 function GetNeighboursHexagonal(L::Int64, Site::Tuple{Int64, Int64})
 
     """
-    Get the indexes of the neighbouring sites to a given site,
-    for the hexagonal lattice.
-    Even rows store the spins of the first sublattice.
-    Odd rows store the spins of the second sublattice.
+    Get the indexes of the neighbouring sites to a given site, for the hexagonal
+    lattice. Even rows store the spins of the first sublattice. Odd rows store
+    the spins of the second sublattice.
     Note: L must be even.
     """
 
@@ -214,8 +214,9 @@ end
 function PreCalculateNeighboursHexagonal(L::Int64)::Array{Vector{Tuple{Int64, Int64}}}
 
     """
-    Pre-calculate the neighbors for all sites in the triangular lattice.
-    Returns a 2D array where each element contains a list of neighboring sites for that lattice site.
+    Pre-calculate the neighbors for all sites in the hexagonal lattice.
+    Returns a 2D array where each element contains a list of neighboring sites
+    for that lattice site.
     """
     
     # Create an empty 2D array where each site has an array of neighbors
@@ -224,7 +225,7 @@ function PreCalculateNeighboursHexagonal(L::Int64)::Array{Vector{Tuple{Int64, In
     # Populate the array 
     for i in 1:L
         for j in 1:L
-            AllNeighbours[i, j] = GetNeighboursHex(L, (i,j))
+            AllNeighbours[i, j] = GetNeighboursHexagonal(L, (i,j))
         end
     end
     
@@ -233,16 +234,13 @@ end
 
 function GetStepAcceptabilitiesHexagonal(Beta::Float64)::Array{Float64}
 
-    # TODO: allow user to choose between square, [2 4], and triangular, [2 4 6]
-    # and hex [1 3] (2 concordi 1 discorde; oppure 3 concordi)
-
     PossibleEnergies = [1 3] # hex lattice
     StepAcceptabilities = exp.(-2 * Beta * PossibleEnergies)
     return StepAcceptabilities
 end
 
 # ------------------------------------------------------------------------------
-# PART 3: Metropolis and cluster update functions
+# PART 3: Metropolis and cluster update functions (all topology-indepenent)
 # ------------------------------------------------------------------------------
 
 function NextMetropolisStep!(L::Int64,

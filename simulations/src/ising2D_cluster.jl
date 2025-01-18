@@ -10,7 +10,7 @@ if length(ARGS) != 6
     println("How to use this program?
 Type the following: \$ julia ./ising2D_metro.jl arg1 arg2 arg3 arg4 arg5 arg6
 Where:
-· arg1 = topology (string, choose: \"square\" / \"triangular\" / \"hexagonal\"
+· arg1 = topology (string, choose: \"square\" / \"triangular\" / \"hexagonal\")
 · arg2 = beta (float)
 · arg3 = number of spins per side in your square lattice (int)
 · arg4 = number of samples to be stashed due to thermalization (int)

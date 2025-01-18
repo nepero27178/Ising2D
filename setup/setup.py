@@ -7,11 +7,11 @@ import numpy as np
 # ------------------------------------------------------------------------------
 
 # Lattice topology "triangular" / "square" / "hexagonal"
-TOPOLOGY = "triangular"
+TOPOLOGY = "hexagonal"
 
 # Lattice sizes to be simulated
 MIN_SIZE = 20
-MAX_SIZE = 200
+MAX_SIZE = 160
 STEP = 20
 SIZES = range(MIN_SIZE, MAX_SIZE + STEP, STEP)
 
@@ -20,10 +20,10 @@ MAX_SIMULATION_DEVIATION = 0.025
 
 # Sampling parameters
 SAMPLING_PARAMETERS = {
-	"thermalization_samples" : 1000,							# How many steps to thermalize?
-	"montecarlo_samples" : 10000,								# How many output raw data?
+	"thermalization_samples" : int(1e4),							# How many steps to thermalize?
+	"montecarlo_samples" : int(1e6),								# How many output raw data?
 	"number_of_beta" : 50,										# How many temperatures per simulation?
-	"block_optimal_length" : 1,									# How long is the optimal block?
+	"block_optimal_length" : 100,									# How long is the optimal block?
 	"block_trial_lengths" : np.linspace(50,150,40,dtype=int),	# Try different block lengths
 	"resampling_fake_samples" : 100								# How many times do we resample?
 }
