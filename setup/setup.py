@@ -22,10 +22,15 @@ MAX_SIMULATION_DEVIATION = 0.025
 SAMPLING_PARAMETERS = {
 	"thermalization_samples" : int(1e4),							# How many steps to thermalize?
 	"montecarlo_samples" : int(1e6),								# How many output raw data?
-	"number_of_beta" : 50,										# How many temperatures per simulation?
+	"number_of_beta" : 50,											# How many temperatures per simulation?
 	"block_optimal_length" : 100,									# How long is the optimal block?
-	"block_trial_lengths" : np.linspace(50,150,40,dtype=int),	# Try different block lengths
-	"resampling_fake_samples" : 100								# How many times do we resample?
+	"block_trial_lengths" : np.linspace(50,150,40,dtype=int),		# Try different block lengths			# TODO Remove
+	"resampling_fake_samples" : 100									# How many times do we resample?		# TODO Remove
+}
+
+STD_DEV_ANALYSIS_SAMPLING_PARAMETERS = {
+	"number_of_plots" : 5,											# Thus, realize 4 simulations plus one centered at beta_c			
+	"block_trial_lengths" : np.linspace(10,150,15,dtype=int),		# Try different block lengths
 }
 
 # ------------------------------------------------------------------------------

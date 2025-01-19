@@ -22,23 +22,8 @@ beta_c = THEORETICAL_CRITICAL_PARAMETERS["beta_c"]
 # ------------------------------------------------------------------------------
 # PART 2: Define functions for range generation
 # ------------------------------------------------------------------------------
-
-def generate_simple_routine_parameters():
-	'''
-	First trivial boundaries generator: from 0.25 to 0.29, useful to generate
-	test data for all the routines. When running this function, set a small
-	first_excluded_size in the varibles definition!
-	'''
 	
-	# Initialize empty list
-	ROUTINE_PARAMETERS = []
-
-	for L in SIZES:
-		ranges.append(L, 0.25, 0.29)
-		
-	return ROUTINE_PARAMETERS
-	
-def generate_routine_parameters():
+def generate_routine_parameters(SIZES, MAX_SIMULATION_DEVIATION):
 
 	'''
 	A little more refined boundaries generator: reads the theoretical values
@@ -94,21 +79,23 @@ def generate_routine_parameters():
 # PART 3: Generate routine ranges and write on file
 # ------------------------------------------------------------------------------
 
-routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters_" + TOPOLOGY + ".txt"
-		
-# Print on file
-with open(routine_parameters_filepath,"w") as routine_parameters_file:
-	routine_parameters_file.write(f"# L, beta_min, beta_max [calculated {datetime.now()} on topology: {TOPOLOGY}]]\n")
+if __name__ == "__main__":
 
-ROUTINE_PARAMETERS = generate_routine_parameters()
-
-print(f"Routine parameters on topology: {TOPOLOGY}")
-for i in range(len(SIZES)):
-	
+	routine_parameters_filepath = repo.working_tree_dir + "/setup/routine_parameters_" + TOPOLOGY + ".txt"
+			
 	# Print on file
-	with open(routine_parameters_filepath,"a") as routine_parameters_file:
-		routine_parameters_file.write(f"{ROUTINE_PARAMETERS[i][0]}, {ROUTINE_PARAMETERS[i][1]}, {ROUTINE_PARAMETERS[i][2]}\n")
+	with open(routine_parameters_filepath,"w") as routine_parameters_file:
+		routine_parameters_file.write(f"# L, beta_min, beta_max [calculated {datetime.now()} on topology: {TOPOLOGY}]]\n")
 
-	# Print on terminal
-	interval_width = round(ROUTINE_PARAMETERS[i][2] - ROUTINE_PARAMETERS[i][1],3)
-	print(f"{ROUTINE_PARAMETERS[i]} [Interval width: {interval_width}]\n")
+	ROUTINE_PARAMETERS = generate_routine_parameters(SIZES, MAX_SIMULATION_DEVIATION)
+
+	print(f"Routine parameters on topology: {TOPOLOGY}")
+	for i in range(len(SIZES)):
+		
+		# Print on file
+		with open(routine_parameters_filepath,"a") as routine_parameters_file:
+			routine_parameters_file.write(f"{ROUTINE_PARAMETERS[i][0]}, {ROUTINE_PARAMETERS[i][1]}, {ROUTINE_PARAMETERS[i][2]}\n")
+
+		# Print on terminal
+		interval_width = round(ROUTINE_PARAMETERS[i][2] - ROUTINE_PARAMETERS[i][1],3)
+		print(f"{ROUTINE_PARAMETERS[i]} [Interval width: {interval_width}]\n")
