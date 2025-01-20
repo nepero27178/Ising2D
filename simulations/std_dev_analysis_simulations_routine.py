@@ -60,15 +60,15 @@ def run_std_dev_analysis_simulations(TOPOLOGY, SAMPLING_PARAMETERS, STD_DEV_ANAL
 		i = 0
 		for beta in np.linspace(beta_min, beta_max, number_of_beta):
             
-            i = i+1
-            print(f"\nSimulation ({i}/{number_of_beta}) for this lattice size")
-		
+			i = i+1
+			print(f"\nSimulation ({i}/{number_of_beta}) for this lattice size")
+
 			julia_script_filepath = repo.working_tree_dir + "/simulations/src/ising2D_cluster.jl"
 			output_data_filepath = repo.working_tree_dir + f"/simulations/data/{TOPOLOGY}/std-dev-analysis/L={L}/beta={beta}.txt"
 			with open(output_data_filepath, "w") as output_data_file:
 				# Write the header line to the file with the current date and time
 				output_data_file.write(f"# e, |m|, m2, m4 [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
-			
+
 			shell_command = "julia " + julia_script_filepath + f" {TOPOLOGY} {beta} {L} {therm_N} {N} " + output_data_filepath	
 			os.system(f"{shell_command}")
 			

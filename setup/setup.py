@@ -25,7 +25,7 @@ SAMPLING_PARAMETERS = {
 	"number_of_beta" : 50,											# How many temperatures per simulation?
 	"block_optimal_length" : 100,									# How long is the optimal block?
 	"block_trial_lengths" : np.linspace(50,150,40,dtype=int),		# Try different block lengths			# TODO Remove
-	"resampling_fake_samples" : 100									# How many times do we resample?		# TODO Remove
+	"resampling_fake_samples" : 100									# How many times do we resample?
 }
 
 STD_DEV_ANALYSIS_SAMPLING_PARAMETERS = {

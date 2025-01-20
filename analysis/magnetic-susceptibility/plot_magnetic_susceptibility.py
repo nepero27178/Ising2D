@@ -5,6 +5,7 @@
 # ------------------------------------------------------------------------------
 
 import os
+from pathlib import Path 		# Manage file paths
 from datetime import datetime
 
 # Get repo root
@@ -27,67 +28,67 @@ from setup import TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS
 
 def plot_chi(TOPOLOGY, SIZES, ax):
 	
-    '''
-    Plot the magnetic susceptibility as a function of beta.
-    Data are retrieved from the /analysis/data/ folder.
-    Input:
-        SIZES: (imported from setup)
-        ax: figure-axis object to plot over, passed here in order to use this function elsewhere
-    Output:
-        ax, modified
-    '''
-
-    for L in SIZES:
-    
-        # Load data
-        input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
-        beta, _, _, chi, e_chi = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
-
-        # Plot chi vs beta
-        plotted_point = ax.errorbar(beta, chi, yerr=e_chi, fmt=".", label=fr"$L$ = {L}")
-        ax.plot(beta, chi, "-", alpha=0.5, color=plotted_point[0].get_color()) # lines connecting the points
-        
+	'''
+	Plot the magnetic susceptibility as a function of beta.
+	Data are retrieved from the /analysis/data/ folder.
+	Input:
+	SIZES: (imported from setup)
+	ax: figure-axis object to plot over, passed here in order to use this function elsewhere
+	Output:
+	ax, modified
+	'''
+	
+	for L in SIZES:
+	
+		# Load data
+		input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
+		beta, _, _, chi, e_chi = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
+		
+		# Plot chi vs beta
+		plotted_point = ax.errorbar(beta, chi, yerr=e_chi, fmt=".", label=fr"$L$ = {L}")
+		ax.plot(beta, chi, "-", alpha=0.5, color=plotted_point[0].get_color()) # lines connecting the points
+		
 	ax.set_title(fr"$\chi'$ - {TOPOLOGY} lattice")
-    ax.legend(loc="upper right")
-    ax.set_xlabel(r"$\beta$")
-    ax.set_ylabel(r"Magnetic susceptibility $\chi'$")
+	ax.legend(loc="upper right")
+	ax.set_xlabel(r"$\beta$")
+	ax.set_ylabel(r"Magnetic susceptibility $\chi'$")
     
     # No return to act over ax
 
 def plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma):
 
-    '''
-    Plot the finite size scaling of the magnetic susceptibility. (i.e. collapse plot).
-    The data are retrieved from the /analysis/data folder.
-    Input:
-    	SIZES: (imported from setup)
-    	ax: figure-axis object to plot over, passed here in order to use this function elsewhere
-        beta_c: float (from theory or pseudocritical_fit)
-        nu: float (from theory or pseudocritical_fit)
-        gamma: float (from theory or chimax_fit)
-    Output:
-        ax, modified
-    '''
+	'''
+	Plot the finite size scaling of the magnetic susceptibility. (i.e. collapse plot).
+	The data are retrieved from the /analysis/data folder.
+	Input:
+		SIZES: (imported from setup)
+		ax: figure-axis object to plot over, passed here in order to use this function elsewhere
+		beta_c: float (from theory or pseudocritical_fit)
+		nu: float (from theory or pseudocritical_fit)
+		gamma: float (from theory or chimax_fit)
+	Output:
+		ax, modified
+	'''
     
-    for L in SIZES:
+	for L in SIZES:
     
-        # Load data
-        input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
-        beta, _, _, chi, e_chi = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
+		# Load data
+		input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
+		beta, _, _, chi, e_chi = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
 
-        # Define scaling variable and function to be plotted
-        x = (beta - beta_c) * L**(1/nu)
-        y = chi / L**(gamma/nu)
-        e_y = e_chi # TODO How to propagate errors?
+		# Define scaling variable and function to be plotted
+		x = (beta - beta_c) * L**(1/nu)
+		y = chi / L**(gamma/nu)
+		e_y = e_chi # TODO How to propagate errors?
 
-        # Plot FSS function
-        plotted_point = ax.errorbar(x, y, yerr=e_y, fmt=".", label=fr"$L$ = {L}")
-        ax.plot(x, y, "-", alpha=0.5, color=plotted_point[0].get_color())
+		# Plot FSS function
+		plotted_point = ax.errorbar(x, y, yerr=e_y, fmt=".", label=fr"$L$ = {L}")
+		ax.plot(x, y, "-", alpha=0.5, color=plotted_point[0].get_color())
 
 	ax.set_title(fr"FSS $\chi'$ - {TOPOLOGY} lattice")
-    ax.legend(loc="upper right")
-    ax.set_xlabel(r"$(\beta - \beta_c) L^{1/\nu}$")
-    ax.set_ylabel(r"$\chi' / L^{\gamma/\nu}$")
+	ax.legend(loc="upper right")
+	ax.set_xlabel(r"$(\beta - \beta_c) L^{1/\nu}$")
+	ax.set_ylabel(r"$\chi' / L^{\gamma/\nu}$")
     
     # No return to act over ax
 

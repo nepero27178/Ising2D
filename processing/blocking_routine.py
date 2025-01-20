@@ -65,7 +65,6 @@ def try_blocking_lengths(TOPOLOGY, STD_DEV_ANALYSIS_ROUTINE_PARAMETERS, STD_DEV_
 	string = ""
 	
 	for length in block_trial_lengths:
-		print("Currently working on block size " + length)
 		string = string + f"{length} "
 		
 	block_trial_lengths = "\"" + string[:-1] + "\""
@@ -83,7 +82,8 @@ def try_blocking_lengths(TOPOLOGY, STD_DEV_ANALYSIS_ROUTINE_PARAMETERS, STD_DEV_
 	# Run the blocking algorithm in Julia for each set of data and block length.
 	# The data are stored in the file /processing/data/trial_blocking_std_dev.txt
 	for L, beta_min, beta_max in STD_DEV_ANALYSIS_ROUTINE_PARAMETERS:
-		
+	
+		print(f"Currently working on block size {L}")		
 		julia_script_filepath = repo.working_tree_dir + "/processing/src/blocking.jl"				# julia script filepath
 		
 		for beta in np.linspace(beta_min, beta_max, number_of_beta):
