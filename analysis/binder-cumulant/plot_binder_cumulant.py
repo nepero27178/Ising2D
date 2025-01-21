@@ -5,6 +5,7 @@
 # ------------------------------------------------------------------------------
 
 import os
+from pathlib import Path
 from datetime import datetime
 
 # Get repo root
@@ -27,66 +28,66 @@ from setup import TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS
 
 def plot_U(TOPOLOGY, SIZES, ax):
 	
-    '''
-    Plot Binder's cumulant as a function of beta.
-    Data are retrieved from the /analysis/data/ folder.
-    Input:
-        SIZES: (imported from setup)
-        ax: figure-axis object to plot over, passed here in order to use this function elsewhere
-    Output:
-        ax, modified
-    '''
-
-    for L in SIZES:
-    
-        # Load data
-        input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
-        beta, U, e_U, _, _ = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
-
-        # Plot U vs beta
-        plotted_point = ax.errorbar(beta, U, yerr=e_U, fmt=".", label=fr"$L$ = {L}")
-        ax.plot(beta, U, "-", alpha=0.5, color=plotted_point[0].get_color()) # lines connecting the points
-        
+	'''
+	Plot Binder's cumulant as a function of beta.
+	Data are retrieved from the /analysis/data/ folder.
+	Input:
+		SIZES: (imported from setup)
+		ax: figure-axis object to plot over, passed here in order to use this function elsewhere
+	Output:
+		ax, modified
+	'''
+	
+	for L in SIZES:
+		
+		# Load data
+		input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
+		beta, U, e_U, _, _ = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
+		
+		# Plot U vs beta
+		plotted_point = ax.errorbar(beta, U, yerr=e_U, fmt=".", label=fr"$L$ = {L}")
+		ax.plot(beta, U, "-", alpha=0.5, color=plotted_point[0].get_color()) # lines connecting the points
+	
 	ax.set_title(fr"$U$ - {TOPOLOGY} lattice")
-    ax.legend(loc="upper right")
-    ax.set_xlabel(r"$\beta$")
-    ax.set_ylabel(r"Binder's cumulant $U$")
-    
-    # No return to act over ax
+	ax.legend(loc="upper right")
+	ax.set_xlabel(r"$\beta$")
+	ax.set_ylabel(r"Binder's cumulant $U$")
+	
+	# No return to act over ax
 
 def plot_fss_U(TOPOLOGY, SIZES, ax, beta_c, nu):
 
-    '''
-    Plot the finite size scaling of Binder's cumulant. (i.e. collapse plot).
-    The data are retrieved from the /analysis/data folder.
-    Input:
-    	SIZES: (imported from setup)
-    	ax: figure-axis object to plot over, passed here in order to use this function elsewhere
-        beta_c: float (from theory or pseudocritical_fit)
-        nu: float (from theory or pseudocritical_fit)
-    Output:
-        ax, modified
-    '''
-    
-    for L in SIZES:
-    
-        # Load data
-        input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
-        beta, U, e_U, _, _ = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
+	'''
+	Plot the finite size scaling of Binder's cumulant. (i.e. collapse plot).
+	The data are retrieved from the /analysis/data folder.
+	Input:
+		SIZES: (imported from setup)
+		ax: figure-axis object to plot over, passed here in order to use this function elsewhere
+		beta_c: float (from theory or pseudocritical_fit)
+		nu: float (from theory or pseudocritical_fit)
+	Output:
+		ax, modified
+	'''
 
-        # Define scaling variable and function to be plotted
-        x = (beta - beta_c) * L**(1/nu)
-        y = U
-        e_y = e_U
+	for L in SIZES:
 
-        # Plot FSS function
-        plotted_point = ax.errorbar(x, y, yerr=e_y, fmt=".", label=fr"$L$ = {L}")
-        ax.plot(x, y, "-", alpha=0.5, color=plotted_point[0].get_color())
+		# Load data
+		input_data_filepath = repo.working_tree_dir + f"/analysis/data/{TOPOLOGY}/L={L}.txt"
+		beta, U, e_U, _, _ = np.loadtxt(input_data_filepath, delimiter=",", unpack=True)
+
+		# Define scaling variable and function to be plotted
+		x = (beta - beta_c) * L**(1/nu)
+		y = U
+		e_y = e_U
+
+		# Plot FSS function
+		plotted_point = ax.errorbar(x, y, yerr=e_y, fmt=".", label=fr"$L$ = {L}")
+		ax.plot(x, y, "-", alpha=0.5, color=plotted_point[0].get_color())
 
 	ax.set_title(fr"FSS $U$ - {TOPOLOGY} lattice")
-    ax.legend(loc="upper right")
-    ax.set_xlabel(r"$(\beta - \beta_c) L^{1/\nu}$")
-    ax.set_ylabel(r"$U$")
+	ax.legend(loc="upper right")
+	ax.set_xlabel(r"$(\beta - \beta_c) L^{1/\nu}$")
+	ax.set_ylabel(r"$U$")
     
     # No return to act over ax
 

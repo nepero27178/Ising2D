@@ -35,12 +35,12 @@ def run_simulations(TOPOLOGY, ROUTINE_PARAMETERS, SAMPLING_PARAMETERS):
 	for L, beta_min, beta_max in ROUTINE_PARAMETERS:
 		Path(repo.working_tree_dir + f"/simulations/data/{TOPOLOGY}/L={L}").mkdir(exist_ok=True) # exist_ok prevents errors if the folder already exists
         
-        i = 0
+		i = 0
 		for beta in np.linspace(beta_min, beta_max, number_of_beta):
             
-            i = i+1
-            print(f"\nSimulation ({i}/{number_of_beta}) for this lattice size")
-		
+			i = i+1
+			print(f"\nSimulation ({i}/{number_of_beta}) for this lattice size")
+
 			# TODO Implement choice between single Metropolis and cluster Metropolis?
 			julia_script_filepath = repo.working_tree_dir + "/simulations/src/ising2D_cluster.jl"
 			output_data_filepath = repo.working_tree_dir + f"/simulations/data/{TOPOLOGY}/L={L}/beta={beta}.txt"
