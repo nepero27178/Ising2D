@@ -7,7 +7,7 @@ import numpy as np
 # ------------------------------------------------------------------------------
 
 # Lattice topology "triangular" / "square" / "hexagonal"
-TOPOLOGY = "triangular"
+TOPOLOGY = "hexagonal"
 
 # Lattice sizes to be simulated
 MIN_SIZE = 20

@@ -94,9 +94,11 @@ function main()
 	U, MagnetizationVariance = GetSecondaryObservables(Data)
 	
     # Susceptibility gets a factor (beta) L^D, ignore (beta)
+	eU, eMagnetizationVariance = GetBootstrapErrors(Data,R)
+	
 	Chi = L^2 * MagnetizationVariance
-	eU, eChi = GetBootstrapErrors(Data,R)
-
+	eChi = L^2 * eMagnetizationVariance
+    
     open(OutputDataFilepath, "a") do io
 		writedlm(io, [Beta U eU Chi eChi], ',')
     end
