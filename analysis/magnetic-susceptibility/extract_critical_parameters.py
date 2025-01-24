@@ -22,14 +22,14 @@ from scipy.optimize import curve_fit
 
 from setup import TOPOLOGY, SIZES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS
 from generate_fit_ranges import generate_fit_ranges
-from fit_magnetic_susceptibility import quadratic_fit_function, quadratic_fit_chi, power_law_fit_function, pseudocritical_beta_fit
+from fit_magnetic_susceptibility import quadratic_fit_function, quadratic_fit_chi, power_law_fit_function, pseudocritical_beta_fit, chi_max_fit
 from plot_magnetic_susceptibility import plot_chi, plot_fss_chi
 
 # ------------------------------------------------------------------------------
 # PART 2: Define functions for critical parameters extraction
 # ------------------------------------------------------------------------------
 
-def extract_critical_parameters(TOPOLOGY, SIZES, FIT_RANGES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS):
+def extract_critical_parameters(TOPOLOGY, SIZES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS):
 
 	print(f"\nStarting extraction of critical parameters on {TOPOLOGY} lattice\n")
 	
@@ -43,7 +43,7 @@ def extract_critical_parameters(TOPOLOGY, SIZES, FIT_RANGES, MAX_FIT_DEVIATION, 
 	
 	quadratic_fit_results_matrix = []
 	
-	for L in SIZES:
+	for L in SIZES[2:]:
 
 		# Comment the next block if you want to manually import fit_range 
 		# using customized ranges rather than the generated ones
@@ -75,7 +75,7 @@ def extract_critical_parameters(TOPOLOGY, SIZES, FIT_RANGES, MAX_FIT_DEVIATION, 
 	e_gamma = np.sqrt((exponent * e_nu)**2 + (nu * e_exponent)**2) # TODO Not independent errors
 	
 	with open(fitted_critical_parameters_filepath,"a") as fitted_critical_parameters_file:
-		fitted_critical_parameters_file.write(f"{beta_c}, {e_beta_c}, {nu}, {e_nu}, {exponent}, {e_exponent} [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
+		fitted_critical_parameters_file.write(f"{beta_c}, {e_beta_c}, {nu}, {e_nu}, {exponent}, {e_exponent} \n")
 		
 	return None
 		
@@ -85,4 +85,4 @@ def extract_critical_parameters(TOPOLOGY, SIZES, FIT_RANGES, MAX_FIT_DEVIATION, 
 
 if __name__ == "__main__":
 
-	extract_critical_parameters(TOPOLOGY, SIZES, FIT_RANGES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS)
+	extract_critical_parameters(TOPOLOGY, SIZES, MAX_FIT_DEVIATION, THEORETICAL_CRITICAL_PARAMETERS)

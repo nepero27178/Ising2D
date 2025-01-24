@@ -138,7 +138,7 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of binder's 
 			plt.show()
 			plt.close()
 			
-			print("Done! Check the pdf file at " + repo.working_tree_dir + f"/analysis/binder_cumulant/results/{TOPOLOGY}/\n")
+			print("Done! Check the pdf file at " + repo.working_tree_dir + f"/analysis/binder-cumulant/results/{TOPOLOGY}/\n")
 		
 		elif user_mode == "--plot-fss-fit":
 		
@@ -151,12 +151,12 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of binder's 
 			fig, ax = plt.subplots(1, 1, figsize=(4,3))
 			plot_fss_U(TOPOLOGY, SIZES, ax, beta_c, nu)
 			
-			plt.savefig(repo.working_tree_dir + f"/analysis/binder_cumulant/results/{TOPOLOGY}/binder_cumulant_plot_FSS_fit.pdf")
+			plt.savefig(repo.working_tree_dir + f"/analysis/binder-cumulant/results/{TOPOLOGY}/binder_cumulant_plot_FSS_fit.pdf")
 			
 			plt.show()
 			plt.close()
 			
-			print("Done! Check the pdf file at " + repo.working_tree_dir + "/analysis/binder_cumulant/results/{TOPOLOGY}/\n")
+			print("Done! Check the pdf file at " + repo.working_tree_dir + "/analysis/binder-cumulant/results/{TOPOLOGY}/\n")
 			
 		else:
 			raise ValueError(error_message)

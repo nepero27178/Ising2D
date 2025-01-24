@@ -39,7 +39,7 @@ del left, right
 		
 # Python modules for analysis
 import matplotlib.pyplot as plt
-# plt.style.use("science")
+plt.style.use("science")
 from datetime import datetime
 		
 # ------------------------------------------------------------------------------

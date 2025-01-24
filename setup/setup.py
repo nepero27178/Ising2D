@@ -71,4 +71,4 @@ elif TOPOLOGY == "hexagonal":
 	MAX_SIMULATION_DEVIATION = 0.035
 	
 # Maximum fit deviation from interval center (beta_pc) of the simulation temperature range
-MAX_FIT_DEVIATION = MAX_SIMULATION_DEVIATION/2
+MAX_FIT_DEVIATION = 0.5 * MAX_SIMULATION_DEVIATION

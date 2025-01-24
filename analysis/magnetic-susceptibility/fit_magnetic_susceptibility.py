@@ -142,15 +142,15 @@ def pseudocritical_beta_fit(TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS):
 		        sigma=e_beta_pc, absolute_sigma=True)
 
 	# Extract parameters (x0 is discarded)
-	beta_c, _, invnu = popt
-	e_beta_c, _, e_invnu = np.sqrt(np.diag(pcov))
+	beta_c, _, exponent = popt
+	e_beta_c, _, e_exponent = np.sqrt(np.diag(pcov))
 
-	nu = 1 / invnu
-	e_nu = e_invnu / invnu**2 # error propagation
+	nu = - 1 / exponent
+	e_nu = e_exponent / exponent**2 # error propagation
 
 	# Calculate chi^2
 	chi2 = np.sum( ((beta_pc - power_law_fit_function(L, *popt)) / e_beta_pc)**2 )
-	ndof = len(beta)-3
+	ndof = len(beta_pc)-3
 	chi2ndof = chi2/ndof
 	
 	return beta_c, e_beta_c, nu, e_nu, chi2ndof
@@ -192,15 +192,15 @@ def chi_max_fit(TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS):
 	th_exponent = th_gamma/th_nu
 
 	# Fit
-	popt, pcov = curve_fit(power_law_fit_function, L, beta_pc, p0=(th_c0, th_y0, th_exponent), sigma=e_chi_max, absolute_sigma=True)
+	popt, pcov = curve_fit(power_law_fit_function, L, chi_max, p0=(th_c0, th_y0, th_exponent), sigma=e_chi_max, absolute_sigma=True)
 
 	# Extract parameters (x0 is discarded)
 	_, _, exponent = popt
 	_, _, e_exponent = np.sqrt(np.diag(pcov))
 
 	# Calculate chi^2
-	chi2 = np.sum( ((beta_pc - power_law_fit_function(L, *popt)) / e_beta_pc)**2 )
-	ndof = len(beta)-3
+	chi2 = np.sum( ((chi_max - power_law_fit_function(L, *popt)) / e_chi_max)**2 )
+	ndof = len(chi_max)-3
 	chi2ndof = chi2/ndof
 	
 	return exponent, e_exponent, chi2ndof
