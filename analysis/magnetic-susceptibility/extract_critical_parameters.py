@@ -39,11 +39,11 @@ def extract_critical_parameters(TOPOLOGY, SIZES, MAX_FIT_DEVIATION, THEORETICAL_
 		
 	fitted_critical_parameters_filepath = repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/fitted_critical_parameters.txt"
 	with open(fitted_critical_parameters_filepath,"w") as fitted_critical_parameters_file:
-		fitted_critical_parameters_file.write(f"# beta_c, e_beta_c, nu, e_nu, gamma, e_gamma [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
+		fitted_critical_parameters_file.write(f"# beta_c, e_beta_c, nu, e_nu, gamma/nu, e_(gamma/nu) [calculated {datetime.now()} on topology: {TOPOLOGY}]\n")
 	
 	quadratic_fit_results_matrix = []
 	
-	for L in SIZES[2:]:
+	for L in SIZES:
 
 		# Comment the next block if you want to manually import fit_range 
 		# using customized ranges rather than the generated ones

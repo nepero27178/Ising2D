@@ -83,8 +83,8 @@ def quadratic_fit_chi(TOPOLOGY, L, fit_range):
 Please run at least one simulation and the processing procedure to perform this fit!\n")
 		sys.exit()
     
-	# Fit (-1 arbitrarily set due to negative concavity)
-	popt, pcov = curve_fit(quadratic_fit_function, beta, chi, p0=(-1, th_beta_pc, th_chi_max), sigma=e_chi, absolute_sigma=True)
+	# Fit (-1e7 arbitrarily set due to negative concavity)
+	popt, pcov = curve_fit(quadratic_fit_function, beta, chi, p0=(-1e7, th_beta_pc, th_chi_max), sigma=e_chi, absolute_sigma=True)
 
 	# Extract parameters (A is discarded)
 	_, beta_pc, chi_max = popt

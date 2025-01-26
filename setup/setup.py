@@ -7,7 +7,7 @@ import numpy as np
 # ------------------------------------------------------------------------------
 
 # Lattice topology "triangular" / "square" / "hexagonal"
-TOPOLOGY = "hexagonal"
+TOPOLOGY = "triangular"
 
 # Lattice sizes to be simulated
 MIN_SIZE = 20
@@ -51,6 +51,12 @@ if TOPOLOGY == "square":
 	THEORETICAL_CRITICAL_PARAMETERS["x_0"] = -0.4
 	THEORETICAL_CRITICAL_PARAMETERS["y_0"] = 0.11
 	THEORETICAL_CRITICAL_PARAMETERS["c_0"] = 0
+	
+	# Maximum simulation deviation from interval center (beta_pc) of the simulation temperature range
+	MAX_SIMULATION_DEVIATION = 0.03
+	
+	# Maximum fit deviation from interval center (beta_pc) of the simulation temperature range
+	MAX_FIT_DEVIATION = 0.33 * MAX_SIMULATION_DEVIATION
 
 elif TOPOLOGY == "triangular":
 	THEORETICAL_CRITICAL_PARAMETERS["beta_c"] = np.log(3)/4
@@ -60,6 +66,10 @@ elif TOPOLOGY == "triangular":
 	
 	# Maximum simulation deviation from interval center (beta_pc) of the simulation temperature range
 	MAX_SIMULATION_DEVIATION = 0.025
+	
+	# Maximum fit deviation from interval center (beta_pc) of the simulation temperature range
+	MAX_FIT_DEVIATION = 0.25 * MAX_SIMULATION_DEVIATION
+
 
 elif TOPOLOGY == "hexagonal":
 	THEORETICAL_CRITICAL_PARAMETERS["beta_c"] = np.log(2 + np.sqrt(3))/2
@@ -69,6 +79,6 @@ elif TOPOLOGY == "hexagonal":
 	
 	# Maximum simulation deviation from interval center (beta_pc) of the simulation temperature range
 	MAX_SIMULATION_DEVIATION = 0.035
-	
-# Maximum fit deviation from interval center (beta_pc) of the simulation temperature range
-MAX_FIT_DEVIATION = 0.5 * MAX_SIMULATION_DEVIATION
+
+	# Maximum fit deviation from interval center (beta_pc) of the simulation temperature range
+	MAX_FIT_DEVIATION = 0.5 * MAX_SIMULATION_DEVIATION

@@ -18,7 +18,7 @@ sys.path.append(repo.working_tree_dir + "/setup/")
 
 import numpy as np
 from matplotlib import pyplot as plt
-# plt.style.use("science")
+plt.style.use("science")
 
 from setup import TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS
 
@@ -38,6 +38,8 @@ def plot_chi(TOPOLOGY, SIZES, ax):
 	ax, modified
 	'''
 	
+	ax.set_prop_cycle('color', plt.cm.tab10.colors)
+
 	for L in SIZES:
 	
 		# Load data
@@ -49,13 +51,13 @@ def plot_chi(TOPOLOGY, SIZES, ax):
 		ax.plot(beta, chi, "-", alpha=0.5, color=plotted_point[0].get_color()) # lines connecting the points
 		
 	ax.set_title(fr"$\chi'$ - {TOPOLOGY} lattice")
-	ax.legend(loc="upper right")
+	ax.legend(loc="upper left")
 	ax.set_xlabel(r"$\beta$")
 	ax.set_ylabel(r"Magnetic susceptibility $\chi'$")
     
     # No return to act over ax
 
-def plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma):
+def plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, exponent, e_exponent):
 
 	'''
 	Plot the finite size scaling of the magnetic susceptibility. (i.e. collapse plot).
@@ -69,7 +71,9 @@ def plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma):
 	Output:
 		ax, modified
 	'''
-    
+
+	ax.set_prop_cycle('color', plt.cm.tab10.colors)
+	    
 	for L in SIZES:
     
 		# Load data
@@ -78,12 +82,12 @@ def plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma):
 
 		# Define scaling variable and function to be plotted
 		x = (beta - beta_c) * L**(1/nu)
-		y = chi / L**(gamma/nu)
-		e_y = e_chi # TODO How to propagate errors?
+		y = chi / L**(exponent)
+		e_y = np.sqrt( ( L**(-exponent) * e_chi )**2 + ((exponent * L**(-exponent-1)) * chi * e_exponent)**2 )
 
 		# Plot FSS function
 		plotted_point = ax.errorbar(x, y, yerr=e_y, fmt=".", label=fr"$L$ = {L}")
-		ax.plot(x, y, "-", alpha=0.5, color=plotted_point[0].get_color())
+		ax.plot(x, y, "-", alpha=0.4, color=plotted_point[0].get_color())
 
 	ax.set_title(fr"FSS $\chi'$ - {TOPOLOGY} lattice")
 	ax.legend(loc="upper right")
@@ -113,7 +117,7 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of magnetic 
 			# Initialize plot
 			print("\nPlotting magnetic susceptibility...\n")
 			
-			fig, ax = plt.subplots(1, 1, figsize=(4,3))
+			fig, ax = plt.subplots(1, 1, figsize=(6,4.5))
 			plot_chi(TOPOLOGY, SIZES, ax)
 			
 			plt.savefig(repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/magnetic_susceptibility_plot.pdf")
@@ -132,8 +136,8 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of magnetic 
 			# Initialize plot
 			print("\nPlotting FSS magnetic susceptibility using theoretical critical parameters...\n")
 			
-			fig, ax = plt.subplots(1, 1, figsize=(4,3))
-			plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma)
+			fig, ax = plt.subplots(1, 1, figsize=(6,4.5))
+			plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma/nu, 0.0)
 			
 			plt.savefig(repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/magnetic_susceptibility_plot_FSS_th.pdf")
 			
@@ -145,13 +149,14 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of magnetic 
 		elif user_mode == "--plot-fss-fit":
 		
 			fitted_critical_parameters_filepath = repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/fitted_critical_parameters.txt"
-			beta_c, _, nu, _, gamma, _ = np.loadtxt(fitted_critical_parameters_filepath, delimiter=',', unpack=True)
+			beta_c, _, nu, _, exponent, e_exponent = np.loadtxt(fitted_critical_parameters_filepath, delimiter=',', unpack=True)
 			
 			# Initialize plot
 			print("\nPlotting FSS magnetic susceptibility using fitted critical parameters...\n")
 			
-			fig, ax = plt.subplots(1, 1, figsize=(4,3))
-			plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, gamma)
+			fig, ax = plt.subplots(1, 1, figsize=(6,4.5))
+			ax.set_prop_cycle('color', plt.cm.tab10.colors)
+			plot_fss_chi(TOPOLOGY, SIZES, ax, beta_c, nu, exponent, e_exponent)
 			
 			plt.savefig(repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/magnetic_susceptibility_plot_FSS_fit.pdf")
 			

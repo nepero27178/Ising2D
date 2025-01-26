@@ -18,7 +18,7 @@ sys.path.append(repo.working_tree_dir + "/setup/")
 
 import numpy as np
 from matplotlib import pyplot as plt
-# plt.style.use("science")
+plt.style.use("science")
 
 from setup import TOPOLOGY, SIZES, THEORETICAL_CRITICAL_PARAMETERS
 
@@ -37,6 +37,8 @@ def plot_U(TOPOLOGY, SIZES, ax):
 	Output:
 		ax, modified
 	'''
+
+	ax.set_prop_cycle('color', plt.cm.tab10.colors)
 	
 	for L in SIZES:
 		
@@ -68,6 +70,8 @@ def plot_fss_U(TOPOLOGY, SIZES, ax, beta_c, nu):
 	Output:
 		ax, modified
 	'''
+
+	ax.set_prop_cycle('color', plt.cm.tab10.colors)
 
 	for L in SIZES:
 
@@ -112,7 +116,7 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of binder's 
 			# Initialize plot
 			print("\nPlotting binder's cumulant...\n")
 			
-			fig, ax = plt.subplots(1, 1, figsize=(4,3))
+			fig, ax = plt.subplots(1, 1, figsize=(6,4.5))
 			plot_U(TOPOLOGY, SIZES, ax)
 			
 			plt.savefig(repo.working_tree_dir + f"/analysis/binder-cumulant/results/{TOPOLOGY}/binder_cumulant_plot.pdf")
@@ -130,7 +134,7 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of binder's 
 			# Initialize plot
 			print("\nPlotting FSS binder's cumulant using theoretical critical parameters...\n")
 			
-			fig, ax = plt.subplots(1, 1, figsize=(4,3))
+			fig, ax = plt.subplots(1, 1, figsize=(6,4.5))
 			plot_fss_U(TOPOLOGY, SIZES, ax, beta_c, nu)
 			
 			plt.savefig(repo.working_tree_dir + f"/analysis/binder-cumulant/results/{TOPOLOGY}/binder_cumulant_plot_FSS_th.pdf")
@@ -145,10 +149,13 @@ Use --plot-fss-fit as a call option to plot finite-size scaled data of binder's 
 			fitted_critical_parameters_filepath = repo.working_tree_dir + f"/analysis/magnetic-susceptibility/results/{TOPOLOGY}/fitted_critical_parameters.txt"
 			beta_c, _, nu, _, _, _ = np.loadtxt(fitted_critical_parameters_filepath, delimiter=',', unpack=True)
 			
+			# TODO Note: this takes the fit results from the susceptibility. 
+			# We might change it to take the fit results of the Binder cumulant.
+
 			# Initialize plot
 			print("\nPlotting FSS Binder's cumulant using fitted critical parameters...\n")
 			
-			fig, ax = plt.subplots(1, 1, figsize=(4,3))
+			fig, ax = plt.subplots(1, 1, figsize=(6,4.5))
 			plot_fss_U(TOPOLOGY, SIZES, ax, beta_c, nu)
 			
 			plt.savefig(repo.working_tree_dir + f"/analysis/binder-cumulant/results/{TOPOLOGY}/binder_cumulant_plot_FSS_fit.pdf")
